@@ -1,0 +1,8 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var imageCollection = ee.ImageCollection("TRMM/3B43V7");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+
+var Syria = ee.Image("syr_admin0")
+
+map.addLayer
+(Syria, {}, "Syria")
