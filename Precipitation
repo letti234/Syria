@@ -4,5 +4,4 @@ var imageCollection = ee.ImageCollection("TRMM/3B43V7");
 
 var Syria = ee.Image("syr_admin0")
 
-map.addLayer
-(Syria, {}, "Syria")
+map.addLayer(Syria, {}, "Syria")
