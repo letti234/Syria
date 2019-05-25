@@ -1,9 +1,6 @@
-/**** Start of imports. If edited, may not auto-convert in the playground. ****/
-var imageCollection = ee.ImageCollection("TRMM/3B43V7");
-/***** End of imports. If edited, may not auto-convert in the playground. *****/
 
-
-
+var precip = ee.ImageCollection('TRMM/3B43V7');
+print(precip);
 
 var Syria = ee.FeatureCollection('users/salem043/syr_admin0')
 
