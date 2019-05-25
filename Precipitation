@@ -1,16 +1,18 @@
-
+//Monthly precipitatipon image collection
 var image = ee.ImageCollection('TRMM/3B43V7');
 print(image);
 
+//Image for Jan 2010
 var Jan2010 = ee.Image('TRMM/3B43V7/3B43_20100101_7A')
 
+//Find band names for Jan 2010
 var bandNames = Jan2010.bandNames();
 print('Band names: ', bandNames); 
 
-
+//Precipitation mapping for Jan 2010
 Map.addLayer(Jan2010, {bands: ['precipitation']}, 'precipitation');
 
-
+//Open Syria border shapefile and plot
 var Syria = ee.FeatureCollection('users/salem043/syr_admin0')
 
 Map.addLayer(Syria, {color: 'FF0000'}, 'Syria');
