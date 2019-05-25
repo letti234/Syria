@@ -1,6 +1,15 @@
 
-var precip = ee.ImageCollection('TRMM/3B43V7');
-print(precip);
+var image = ee.ImageCollection('TRMM/3B43V7');
+print(image);
+
+var Jan2010 = ee.Image('TRMM/3B43V7/3B43_20100101_7A')
+
+var bandNames = Jan2010.bandNames();
+print('Band names: ', bandNames); 
+
+
+Map.addLayer(Jan2010, {bands: ['precipitation']}, 'precipitation');
+
 
 var Syria = ee.FeatureCollection('users/salem043/syr_admin0')
 
