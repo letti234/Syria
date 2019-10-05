@@ -21,3 +21,32 @@ print(features);
 //Import population data
 var pop = ee.ImageCollection("WorldPop/GP/100m/pop")
 
+//Count total predicted population per grid cell
+
+
+//Examine distribution of population counts in 2005
+
+
+
+
+
+//select ''urban'' cutoff
+
+
+
+
+//Estimate drought intensity 2006-2011 per grid cell
+
+
+
+//Least cost path to urban grid cell
+
+
+
+
+//Use minimum cost path to identify ''closest''urban area
+
+
+
+
+
