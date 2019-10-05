@@ -1,24 +1,23 @@
+//Syria boundary polygon
+var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
+//Map.addLayer(Syria, {color: 'FF0000'}, 'Syria');
 
-
-var Syria = ee.FeatureCollection('users/salem043/syr_admin0')
-
-Map.addLayer(Syria, {color: 'FF0000'}, 'Syria');
-
-
+//Conflict site location data
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
-Map.addLayer(site, {color: 'red'}, 'location');
+//Map.addLayer(site, {color: 'red'}, 'location');
 
-
-var x = ee.List.sequence(35.61394, 42.38504, 0.1)
-var y = ee.List.sequence(32.31644, 37.31914, 0.1)
+//Grid cells over Syria (3,467 total)
+var x = ee.List.sequence(35.61394, 42.38504, 0.1);
+var y = ee.List.sequence(32.31644, 37.31914, 0.1);
 var features = ee.FeatureCollection(x.map(function(xcor){
 var feat = ee.FeatureCollection(y.map(function(ycor){
-return ee.Feature(ee.Geometry.Point([xcor,ycor]))
-}))
-return feat
-})).flatten()
- 
-print(features)
-Map.addLayer(features)
+return ee.Feature(ee.Geometry.Point([xcor,ycor]));
+}));
+return feat;
+})).flatten();
+print(features);
+//Map.addLayer(features);
 
-
+//Import population data
+var pop = ee.ImageCollection("WorldPop/GP/100m/pop");
+var Syriapop = clip()
