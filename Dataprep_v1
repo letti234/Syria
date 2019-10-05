@@ -1,2 +1,3 @@
 
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
+Map.addLayer(site, {color: 'red'}, 'location');
