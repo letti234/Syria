@@ -19,5 +19,7 @@ print(features);
 //Map.addLayer(features);
 
 //Import population data
-var pop = ee.ImageCollection("WorldPop/GP/100m/pop");
-var Syriapop = clip()
+var pop = ee.ImageCollection("WorldPop/GP/100m/pop")
+.filterBounds(Syria);
+Map.addLayer(pop);
+
