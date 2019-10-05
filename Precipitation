@@ -1,9 +1,11 @@
 //Monthly precipitatipon image collection
-var image = ee.ImageCollection('TRMM/3B43V7');
+var image = ee.ImageCollection('TRMM/3B43V7')
+.filter(ee.Filter.date('2000-01-01', '2011-01-01'));
 print('rainfall data', image);
 
-//Image for Jan 2010
-var Jan2010 = ee.Image('TRMM/3B43V7/3B43_20100101_7A')
+//Mean rainfall per year
+var rain_00 = 
+
 
 //Find band names for Jan 2010
 var bandNames = Jan2010.bandNames();
