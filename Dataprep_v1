@@ -8,9 +8,6 @@ var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
 //Map.addLayer(site, {color: 'red'}, 'location');
 
-
-
-
 //Grid cells over Syria 
 
 var lat_start = 32.31644;
@@ -40,18 +37,9 @@ var grid = ee.FeatureCollection(polys);
 Map.addLayer(grid);
 
 
-
-
-
-
-
-
-
-
-
 //Worldpop population data
-var pop = ee.ImageCollection("WorldPop/GP/100m/pop").filterBounds(features);
-print(pop, 'worldpop data');
+var pop = ee.ImageCollection("WorldPop/GP/100m/pop").filterBounds(grid);
+print('Worldpop data', pop);
 
 //PREDICTED POPULATION WITHIN EACH GRID CELL ///////////////////////////////////////
 
@@ -68,13 +56,16 @@ var Syria_01 = yr_2001_img.clip(Syria);
 
 //Reduce these images to the grid coordinates
 
-var grids_01 = Syria_00.reduceRegions({
+var grids_00 = Syria_00.reduceRegions({
   collection: grid,
   reducer: ee.Reducer.sum(),
   scale: 4000,
 });
-Map.addLayer(grids_01);
+print('2000 grid', grids_00);
 
+
+
+    
 
 
 //Examine distribution of population counts in 2005
