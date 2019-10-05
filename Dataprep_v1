@@ -8,6 +8,11 @@ var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
 //Map.addLayer(site, {color: 'red'}, 'location');
 
+//Drought and precipitation data
+var rainfall=ee.ImageCollection("IDAHO_EPSCOR/TERRACLIMATE")
+.filter(ee.Filter.date('2000-01-01', '2011-01-01'));
+
+
 //Grid cells over Syria 
 
 var lat_start = 32.31644;
@@ -34,7 +39,7 @@ for (var lon = lon_start; lon < lon_end; lon += lon_edge) {
   }
 }
 var grid = ee.FeatureCollection(polys);
-Map.addLayer(grid);
+print('Grid', grid)
 
 
 //Worldpop population data
@@ -44,30 +49,35 @@ print('Worldpop data', pop);
 //PREDICTED POPULATION WITHIN EACH GRID CELL ///////////////////////////////////////
 
 //Create series of 11 images for years 2000-2011 in Syria
+//(2000 shown here as trial)
 
 var yr_2000 = pop.filterDate('2000');
 var yr_2000_img = yr_2000.reduce(ee.Reducer.sum());
 var Syria_00 = yr_2000_img.clip(Syria);
-print('2000 data no grid', Syria_00);
+//Map.addLayer(Syria_00);
 
-
-var yr_2001 = pop.filterDate('2000');
-var yr_2001_img = yr_2001.reduce(ee.Reducer.sum());
-var Syria_01 = yr_2001_img.clip(Syria);
-
-//Reduce these images to the grid coordinates
-
+//Create a dataframe that sums the population counts in the pixels
+//within each grid
 var grids_00 = Syria_00.reduceRegions({
   collection: grid,
   reducer: ee.Reducer.sum(),
-  scale: 4000,
+  scale: 6000,
 });
 print('2000 grid', grids_00);
 
+//Estimate drought intensity 2006-2011 per grid cell
+
+var rain_00=rainfall.filterDate('2000')
+var rain_00_img = rain_00.reduce(ee.Reducer.median());
+print(rain_00_img)
+
+var visParams = {bands: ['pr_median'], max: 0.3};
+Map.addLayer(rain_00_img, visParams, 'true-color composite');
 
 
 
-//Examine distribution of population counts in 2005
+//DROUGHT PER GRID CELL
+//Identify the rainfall patterns for 2000 to 2011.
 
 
 
@@ -78,7 +88,6 @@ print('2000 grid', grids_00);
 
 
 
-//Estimate drought intensity 2006-2011 per grid cell
 
 
 
