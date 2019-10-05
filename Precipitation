@@ -1,6 +1,6 @@
 //Monthly precipitatipon image collection
 var image = ee.ImageCollection('TRMM/3B43V7');
-print(image);
+print('rainfall data', image);
 
 //Image for Jan 2010
 var Jan2010 = ee.Image('TRMM/3B43V7/3B43_20100101_7A')
