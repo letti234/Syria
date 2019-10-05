@@ -1,3 +1,7 @@
+var Syria = ee.FeatureCollection('users/salem043/syr_admin0')
+
+Map.addLayer(Syria, {color: 'FF0000'}, 'Syria');
+
 
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
 Map.addLayer(site, {color: 'red'}, 'location');
