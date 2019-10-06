@@ -15,7 +15,7 @@ var lat_end = 37.31914;
 var lon_start = 35.61394; 
 var lon_end = 42.38504;
 // 2) Decide no. of (in this case: equally sized) cells
-var num_cells = 1000;
+var num_cells = 10;
 var lon_edge = (lon_end-lon_start)/Math.sqrt(num_cells);
 var lat_edge = (lat_end-lat_start)/Math.sqrt(num_cells);
 // 3) Create the grid
@@ -40,25 +40,32 @@ print('Grid', grid)
 var pop = ee.ImageCollection("WorldPop/GP/100m/pop").filterBounds(grid);
 print('Worldpop data', pop);
 
+
+
 //PREDICTED POPULATION WITHIN EACH GRID CELL ///////////////////////////////////////
 
-//2000 population map for Syria
+//2000 population gridded dataframe for Syria
 
-var yr_2000 = pop.filterDate('2000');
-var yr_2000_img = yr_2000.reduce(ee.Reducer.sum());
-var Syria_00 = yr_2000_img.clip(Syria);
-Map.addLayer(Syria_00);
+var pop_00 = pop.filterDate('2000');
+var pop_00_img = pop_00.reduce(ee.Reducer.sum());
+var pop_clip_00 = pop_00_img.clip(Syria);
+var pop_grid_00 = pop_clip_00.reduceRegions({collection: grid,reducer: 
+ee.Reducer.sum(), scale: 6000,});
+print('2000 populations', pop_grid_00);
 
-    
-//Create a dataframe that sums the population counts in the pixels
-//within each grid
-var grids_00 = Syria_00.reduceRegions({
-  collection: grid,
-  reducer: ee.Reducer.sum(),
-  scale: 6000,
-});
-print('2000 grid', grids_00);
+//2001 population gridded dataframe for Syria
 
+var pop_01 = pop.filterDate('2000');
+var pop_01_img = pop_01.reduce(ee.Reducer.sum());
+var pop_clip_01 = pop_01_img.clip(Syria);
+var pop_grid_01 = pop_clip_01.reduceRegions({collection: grid,reducer: 
+ee.Reducer.sum(), scale: 6000,});
+
+
+//Combine dataframes
+
+
+///Export.table.toDrive({collection: grids_00, description:'Sampledataextract', fileFormat: 'csv'});
 
 
 //Least cost path to urban grid cell
