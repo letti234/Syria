@@ -46,23 +46,51 @@ print('Worldpop data', pop);
 
 //2000 population gridded dataframe for Syria
 
+//pop is WorldPop data for countries that border Syria since it's limited to the grid
+//This step restricts the pop data to only 2000
 var pop_00 = pop.filterDate('2000');
+//This step reduces the image collection to an image.
 var pop_00_img = pop_00.reduce(ee.Reducer.sum());
+//This step restricts our WorldPop data to only the Syria country boundary
 var pop_clip_00 = pop_00_img.clip(Syria);
+//This step sums the population counts within the grids
 var pop_grid_00 = pop_clip_00.reduceRegions({collection: grid,reducer: 
 ee.Reducer.sum(), scale: 6000,});
 print('2000 populations', pop_grid_00);
 
 //2001 population gridded dataframe for Syria
 
-var pop_01 = pop.filterDate('2000');
+var pop_01 = pop.filterDate('2001');
 var pop_01_img = pop_01.reduce(ee.Reducer.sum());
 var pop_clip_01 = pop_01_img.clip(Syria);
 var pop_grid_01 = pop_clip_01.reduceRegions({collection: grid,reducer: 
 ee.Reducer.sum(), scale: 6000,});
 
+//2002 population gridded dataframe for Syria
+
+var pop_02 = pop.filterDate('2002');
+var pop_02_img = pop_02.reduce(ee.Reducer.sum());
+var pop_clip_02 = pop_02_img.clip(Syria);
+var pop_grid_02 = pop_clip_02.reduceRegions({collection: grid,reducer: 
+ee.Reducer.sum(), scale: 6000,});
 
 //Combine dataframes
+
+// Use an equals filter to specify how the collections match.
+var toyFilter = ee.Filter.equals({
+  leftField: 'system:index',
+  rightField: 'system:index'
+});
+
+// Define the join.
+var innerJoin = ee.Join.inner('primary', 'secondary');
+
+// Apply the join.
+var toyJoin = innerJoin.apply(pop_grid_00, pop_grid_01, toyFilter);
+
+
+// Print the result.
+print('Inner join toy example:', toyJoin);
 
 
 ///Export.table.toDrive({collection: grids_00, description:'Sampledataextract', fileFormat: 'csv'});
