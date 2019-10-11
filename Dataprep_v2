@@ -8,6 +8,11 @@ var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
 //Map.addLayer(site, {color: 'red'}, 'location');
 
+//Worldpop population data
+var pop = ee.ImageCollection("WorldPop/GP/100m/pop").filterDate('2000', '2010').filterBounds(Syria);
+var pop2 = pop.map(function(image) { return image.clip(Syria); });
+print('Worldpop data', pop2);
+
 //Grid cells over Syria 
 
 var lat_start = 32.31644;
@@ -15,7 +20,7 @@ var lat_end = 37.31914;
 var lon_start = 35.61394; 
 var lon_end = 42.38504;
 // 2) Decide no. of (in this case: equally sized) cells
-var num_cells = 10;
+var num_cells = 10000;
 var lon_edge = (lon_end-lon_start)/Math.sqrt(num_cells);
 var lat_edge = (lat_end-lat_start)/Math.sqrt(num_cells);
 // 3) Create the grid
@@ -33,84 +38,40 @@ for (var lon = lon_start; lon < lon_end; lon += lon_edge) {
     polys.push(ee.Feature(ee.Geometry.Rectangle(x1, y1, x2, y2), {label: cell_id}));
   }
 }
-var grid = ee.FeatureCollection(polys);
+var grid = ee.FeatureCollection(polys).filterBounds(Syria);
 print('Grid', grid)
-
-//Worldpop population data
-var pop = ee.ImageCollection("WorldPop/GP/100m/pop").filterBounds(grid);
-print('Worldpop data', pop);
+Map.addLayer(grid);
 
 
 
 //PREDICTED POPULATION WITHIN EACH GRID CELL ///////////////////////////////////////
 
-//2000 population gridded dataframe for Syria
+//This converts our image collection into a stack of bands
+function newCollectionToImage(collection){
+var stack = ee.Image(collection.iterate(function(img, prev) {
+return ee.Image(prev).addBands(img);
+}, ee.Image(1)));
+ 
+stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
+return stack;
+}
 
-//pop is WorldPop data for countries that border Syria since it's limited to the grid
-//This step restricts the pop data to only 2000
-var pop_00 = pop.filterDate('2000');
-//This step reduces the image collection to an image.
-var pop_00_img = pop_00.reduce(ee.Reducer.sum());
-//This step restricts our WorldPop data to only the Syria country boundary
-var pop_clip_00 = pop_00_img.clip(Syria);
-//This step sums the population counts within the grids
-var pop_grid_00 = pop_clip_00.reduceRegions({collection: grid,reducer: 
-ee.Reducer.sum(), scale: 6000,});
-print('2000 populations', pop_grid_00);
-
-//2001 population gridded dataframe for Syria
-
-var pop_01 = pop.filterDate('2001');
-var pop_01_img = pop_01.reduce(ee.Reducer.sum());
-var pop_clip_01 = pop_01_img.clip(Syria);
-var pop_grid_01 = pop_clip_01.reduceRegions({collection: grid,reducer: 
-ee.Reducer.sum(), scale: 6000,});
-
-//2002 population gridded dataframe for Syria
-
-var pop_02 = pop.filterDate('2002');
-var pop_02_img = pop_02.reduce(ee.Reducer.sum());
-var pop_clip_02 = pop_02_img.clip(Syria);
-var pop_grid_02 = pop_clip_02.reduceRegions({collection: grid,reducer: 
-ee.Reducer.sum(), scale: 6000,});
-
-//Combine dataframes
-
-// Use an equals filter to specify how the collections match.
-var toyFilter = ee.Filter.equals({
-  leftField: 'system:index',
-  rightField: 'system:index'
+var tch = pop.map(function(img){
+var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
+return img.set("year",y).rename(y);
 });
 
-// Define the join.
-var innerJoin = ee.Join.inner('primary', 'secondary');
+ 
+// create single image from collection
+var tchImg = newCollectionToImage(tch);
+print("pop2", tchImg);
 
-// Apply the join.
-var toyJoin = innerJoin.apply(pop_grid_00, pop_grid_01, toyFilter);
+var pop_Syria=tchImg.clip(Syria);
+print(pop_Syria);
 
+//var pop_grid = pop_Syria.reduceRegions({grid,reducer: 
+//ee.Reducer.sum(), scale: 6000,});
 
-// Print the result.
-print('Inner join toy example:', toyJoin);
-
-
-///Export.table.toDrive({collection: grids_00, description:'Sampledataextract', fileFormat: 'csv'});
-
-
-//Least cost path to urban grid cell
-
-
-
-
-//Use minimum cost path to identify ''closest''urban area
-
-
-var sequence = ee.List.sequence(2000, 2010);
-print('Sequence:', sequence);
-//var grid_pop=pop.map(function(popmap)){return(popmap)}
-
-
-var pop_grids = pop.map(function(pt(x)) {
-var pop_grid_x = pop.reduceRegions({collection: grid,reducer: 
-ee.Reducer.sum(), scale: 6000,});
-});
+var result = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
+print(result);
 
