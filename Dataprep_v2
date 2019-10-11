@@ -63,10 +63,10 @@ return img.set("year",y).rename(y);
 
  
 // create single image from collection
-var tchImg = newCollectionToImage(tch);
-print("pop2", tchImg);
+var tchImg = newCollectionToImage(tch).clip(Syria);
+Map.addLayer(tchImg);
 
-var pop_Syria=tchImg.clip(Syria);
+var pop_Syria=tchImg;
 print(pop_Syria);
 
 //var pop_grid = pop_Syria.reduceRegions({grid,reducer: 
