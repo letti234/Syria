@@ -20,7 +20,7 @@ var lat_end = 37.31914;
 var lon_start = 35.61394; 
 var lon_end = 42.38504;
 // 2) Decide no. of (in this case: equally sized) cells
-var num_cells = 10000;
+var num_cells = 1000;
 var lon_edge = (lon_end-lon_start)/Math.sqrt(num_cells);
 var lat_edge = (lat_end-lat_start)/Math.sqrt(num_cells);
 // 3) Create the grid
