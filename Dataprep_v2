@@ -74,9 +74,14 @@ return img.set("year",y).rename(y);
 });
 
 var tchImg = newCollectionToImage(tch).clip(Syria);
-var pop_Syria=tchImg;
+var pop_Syr=tchImg;
 
-print(pop_Syria);
+var pop_Syria = 
+pop_Syr.select(['2000', '2001', '2002', '2003', '2004', '2005', '2006',
+'2007', '2008', '2009', '2010'],
+['pop_00', 'pop_01', 'pop_02', 'pop_03', 'pop_04', 'pop_05', 'pop_06',
+'pop_07', 'pop_08', 'pop_09', 'pop_10']);
+
 
 //Sum population counts in the pixels to the grid
 var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
