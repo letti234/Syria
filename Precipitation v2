@@ -10,7 +10,7 @@ var Syria = ee.FeatureCollection('users/salem043/syr_admin0')
 var rainfall = ee.ImageCollection('TRMM/3B43V7')
   .filterDate('2000', '2011')
   .filterBounds(Syria)
-  .map(function(image){return image.clip(Syria)}) ;
+  .map(function(image){return image.clip(Syria)}).select('precipitation') ;
 print('rainfall data', rainfall);
 Map.addLayer(rainfall);
 
@@ -39,16 +39,34 @@ for (var lon = lon_start; lon < lon_end; lon += lon_edge) {
     polys.push(ee.Feature(ee.Geometry.Rectangle(x1, y1, x2, y2), {label: cell_id}));
   }
 }
-var grid = ee.FeatureCollection(polys);
+
+var grid = ee.FeatureCollection(polys).filterBounds(Syria);
 print('Grid', grid)
+Map.addLayer(grid);
 
 
-var rainfall_stack = rainfall.toList(rainfall.size());
-print(rainfall_stack);
+function newCollectionToImage(collection){
+var stack = ee.Image(collection.iterate(function(img, prev) {
+return ee.Image(prev).addBands(img);
+}, ee.Image(1)));
+ 
+stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
+return stack;
+}
 
+var tch = rainfall.map(function(img){
+var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
+return img.set("year",y).rename(y);
+});
 
-var Syr_gridrain = rainfall_stack.reduceRegions(grid,ee.Reducer.mean());
-//print('Rainfall grid data', Syr_gridrain);
+var tchImg = newCollectionToImage(tch).clip(Syria);
+var rainfall_Syria=tchImg;
+print('Annual rainfall data stack', rainfall_Syria);
+
+var Syr_gridrain = 
+rainfall_Syria.
+reduceRegions(grid, ee.Reducer.mean());
+print('Rainfall data', Syr_gridrain);
 
 
 
