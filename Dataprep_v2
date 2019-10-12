@@ -17,10 +17,16 @@ var pop = Allpop.filterMetadata('country', 'equals', 'SYR');
 print(pop);
 
 print('Worldpop data for Syria', pop);
-Map.addLayer(pop);
-Map.addLayer(site, {color: 'red'}, 'location');
 
-//Produce grid cells over Syria 
+var rainfall = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2000', '2011')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation') ;
+print('NASA rainfall data', rainfall);
+
+
+
+//Produce grid cells over Syria //////////////////////////////////////////// 
 var lat_start = 32.31644;
 var lat_end = 37.31914;
 var lon_start = 35.61394; 
@@ -61,17 +67,45 @@ stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
 return stack;
 }
 
+//Apply the function
 var tch = pop.map(function(img){
 var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
 return img.set("year",y).rename(y);
 });
 
-// Apply the function
 var tchImg = newCollectionToImage(tch).clip(Syria);
 var pop_Syria=tchImg;
 
-
+//Sum population counts in the pixels to the grid
 var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
-print('Population data', Syr_gridpop);
+print('Grid population data', Syr_gridpop);
+
+
+
+//MEAN RAINFALL PER MONTH WITHIN EACH GRID CELL  ///////////////////////////////////////////////////////
+
+
+function newCollectionToImage(collection){
+var stack = ee.Image(collection.iterate(function(img, prev) {
+return ee.Image(prev).addBands(img);
+}, ee.Image(1)));
+ 
+stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
+return stack;
+}
+
+var tch = rainfall.map(function(img){
+var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
+return img.set("year",y).rename(y);
+});
+
+var tchImg = newCollectionToImage(tch).clip(Syria);
+var rainfall_Syria=tchImg;
+
+var Syr_gridrain = 
+rainfall_Syria.
+reduceRegions(grid, ee.Reducer.mean());
+print('Grid rainfall data', Syr_gridrain);
+
 
 
