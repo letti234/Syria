@@ -32,7 +32,7 @@ var lat_end = 37.31914;
 var lon_start = 35.61394; 
 var lon_end = 42.38504;
 // 2) Decide no. of (in this case: equally sized) cells
-var num_cells = 1000;
+var num_cells = 10;
 var lon_edge = (lon_end-lon_start)/Math.sqrt(num_cells);
 var lat_edge = (lat_end-lat_start)/Math.sqrt(num_cells);
 // 3) Create the grid
@@ -110,6 +110,7 @@ print('Grid rainfall data', Syr_gridrain);
 
 //Join the rainfall and population data ////////////////////////
 
+
 var toyFilter = ee.Filter.equals({
   leftField: 'system:index',
   rightField: 'system:index'
@@ -121,9 +122,16 @@ var innerJoin = ee.Join.inner();
 // Apply the join.
 var Syriagrid = innerJoin.apply(Syr_gridpop, Syr_gridrain,  toyFilter);
 
+
+var Syriagrid_final=Syriagrid.map(function(pair) {
+  var f1 = ee.Feature(pair.get('primary'));
+  var f2 = ee.Feature(pair.get('secondary'));
+  return f1.set(f2.toDictionary());
+});
+
 // Print the result.
-print('Rainfall and pop grid data', Syriagrid);
+print('Rainfall and pop grid data', Syriagrid_final);
 
 //Export ///////////////////////////////////////////////////////
 
-Export.table.toDrive(Syriagrid, "Syria data v1");
+Export.table.toDrive(Syriagrid_final, "Syria data v1");
