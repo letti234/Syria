@@ -8,18 +8,19 @@ var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
 
 //Worldpop population data 2000-2010 cropped to Syria
-var pop = ee.ImageCollection("WorldPop/GP/100m/pop")
-  .filterDate('2000', '2010')
+var Allpop = ee.ImageCollection("WorldPop/GP/100m/pop")
+  .filterDate('2000', '2011')
   .filterBounds(Syria)
   .map(function(image){return image.clip(Syria)}) ;
 
-print('Worldpop data', pop);
+var pop = Allpop.filterMetadata('country', 'equals', 'SYR');
+print(pop);
+
+print('Worldpop data for Syria', pop);
 Map.addLayer(pop);
 Map.addLayer(site, {color: 'red'}, 'location');
 
-
-//Grid cells over Syria 
-
+//Produce grid cells over Syria 
 var lat_start = 32.31644;
 var lat_end = 37.31914;
 var lon_start = 35.61394; 
@@ -48,7 +49,6 @@ print('Grid', grid)
 Map.addLayer(grid);
 
 
-
 //PREDICTED POPULATION WITHIN EACH GRID CELL ///////////////////////////////////////
 
 //This function converts our image collection into a stack of bands
@@ -71,9 +71,7 @@ var tchImg = newCollectionToImage(tch).clip(Syria);
 var pop_Syria=tchImg;
 
 
-//var pop_grid = pop_Syria.reduceRegions({grid,reducer: 
-//ee.Reducer.sum(), scale: 6000,});
+var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
+print('Population data', Syr_gridpop);
 
-var result = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
-print('Uncleaned pop data', result);
 
