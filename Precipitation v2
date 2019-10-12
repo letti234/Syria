@@ -43,22 +43,12 @@ var grid = ee.FeatureCollection(polys);
 print('Grid', grid)
 
 
+var rainfall_stack = rainfall.toList(rainfall.size());
+print(rainfall_stack);
 
-//This function converts our image collection into a stack of bands
-function newCollectionToImage(collection){
-var stack = ee.Image(collection.iterate(function(img, prev) {
-return ee.Image(prev).addBands(img);
-}, ee.Image(1)));
- 
-stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
-return stack;
-}
 
-var tch = rainfall.map(function(img){
-var y = ee.String(ee.Date(img.get('system:time_start')).get("date"));
-return img.set("date",y).rename(y);
-});
+var Syr_gridrain = rainfall_stack.reduceRegions(grid,ee.Reducer.mean());
+//print('Rainfall grid data', Syr_gridrain);
 
-var tchImg = newCollectionToImage(tch).clip(Syria);
-var pop_Syria=tchImg;
+
 
