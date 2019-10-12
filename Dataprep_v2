@@ -76,6 +76,8 @@ return img.set("year",y).rename(y);
 var tchImg = newCollectionToImage(tch).clip(Syria);
 var pop_Syria=tchImg;
 
+print(pop_Syria);
+
 //Sum population counts in the pixels to the grid
 var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
 print('Grid population data', Syr_gridpop);
@@ -121,7 +123,7 @@ var innerJoin = ee.Join.inner();
 
 // Apply the join.
 var Syriagrid = innerJoin.apply(Syr_gridpop, Syr_gridrain,  toyFilter);
-
+print('Preliminary feature collection', Syriagrid);
 
 var Syriagrid_final=Syriagrid.map(function(pair) {
   var f1 = ee.Feature(pair.get('primary'));
@@ -134,4 +136,4 @@ print('Rainfall and pop grid data', Syriagrid_final);
 
 //Export ///////////////////////////////////////////////////////
 
-Export.table.toDrive(Syriagrid_final, "Syria data v1");
+//Export.table.toDrive(Syriagrid_final, "Syria data v1");
