@@ -42,28 +42,6 @@ for (var lon = lon_start; lon < lon_end; lon += lon_edge) {
 var grid = ee.FeatureCollection(polys);
 print('Grid', grid)
 
-//Cleaning  ///////////////////////////////////////////////////////
-
-
-//Restrict rainfall data to only 2000
-var rain_00 = ee.ImageCollection('TRMM/3B43V7')
-    .filterDate('2000');
-print('2000 rainfall', rain_00);
-
-//Identify mean rainfall per pixel in 2000
-var mean_00 = rain_00.reduce(ee.Reducer.mean())
-
-//Clip to Syria shapefile
-var mean_00_Syr = mean_00.clip(Syria);
-
-
-//Reduce to grid cells
-var grid_rain_00 = mean_00_Syr.reduceRegions({
-  collection: grid,
-  reducer: ee.Reducer.mean(),
-  scale: 4000 // the resolution of the GRIDMET dataset
-});
-print('Mean rainfall 2000 by grid cell', grid_rain_00);
 
 
 //This function converts our image collection into a stack of bands
@@ -76,18 +54,11 @@ stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
 return stack;
 }
 
-var tch = pop.map(function(img){
-var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
-return img.set("year",y).rename(y);
+var tch = rainfall.map(function(img){
+var y = ee.String(ee.Date(img.get('system:time_start')).get("date"));
+return img.set("date",y).rename(y);
 });
 
-// Apply the function
 var tchImg = newCollectionToImage(tch).clip(Syria);
 var pop_Syria=tchImg;
-
-
-var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
-print('Population data', Syr_gridpop);
-
-
 
