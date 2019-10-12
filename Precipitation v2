@@ -1,0 +1,93 @@
+//DATA  ///////////////////////////////////////////////////////
+
+//Syria boundary shapefile
+var Syria = ee.FeatureCollection('users/salem043/syr_admin0')
+
+//Monthly precipitatipon image collection
+//var image = ee.ImageCollection('TRMM/3B43V7')
+//.filter(ee.Filter.date('2000-01-01', '2011-01-01'));
+
+var rainfall = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2000', '2011')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}) ;
+print('rainfall data', rainfall);
+Map.addLayer(rainfall);
+
+
+//Grid over Syria
+var lat_start = 32.31644;
+var lat_end = 37.31914;
+var lon_start = 35.61394; 
+var lon_end = 42.38504;
+// 2) Decide no. of (in this case: equally sized) cells
+var num_cells = 10;
+var lon_edge = (lon_end-lon_start)/Math.sqrt(num_cells);
+var lat_edge = (lat_end-lat_start)/Math.sqrt(num_cells);
+// 3) Create the grid
+var polys = [];
+var polys_line = [];
+var cell_id = 0;
+for (var lon = lon_start; lon < lon_end; lon += lon_edge) {
+  var x1 = lon;
+  var x2 = lon + lon_edge;
+  for (var lat = lat_start; lat < lat_end; lat += lat_edge) {
+    cell_id = cell_id + 1;
+    var y1 = lat;
+    var y2 = lat + lat_edge;
+
+    polys.push(ee.Feature(ee.Geometry.Rectangle(x1, y1, x2, y2), {label: cell_id}));
+  }
+}
+var grid = ee.FeatureCollection(polys);
+print('Grid', grid)
+
+//Cleaning  ///////////////////////////////////////////////////////
+
+
+//Restrict rainfall data to only 2000
+var rain_00 = ee.ImageCollection('TRMM/3B43V7')
+    .filterDate('2000');
+print('2000 rainfall', rain_00);
+
+//Identify mean rainfall per pixel in 2000
+var mean_00 = rain_00.reduce(ee.Reducer.mean())
+
+//Clip to Syria shapefile
+var mean_00_Syr = mean_00.clip(Syria);
+
+
+//Reduce to grid cells
+var grid_rain_00 = mean_00_Syr.reduceRegions({
+  collection: grid,
+  reducer: ee.Reducer.mean(),
+  scale: 4000 // the resolution of the GRIDMET dataset
+});
+print('Mean rainfall 2000 by grid cell', grid_rain_00);
+
+
+//This function converts our image collection into a stack of bands
+function newCollectionToImage(collection){
+var stack = ee.Image(collection.iterate(function(img, prev) {
+return ee.Image(prev).addBands(img);
+}, ee.Image(1)));
+ 
+stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
+return stack;
+}
+
+var tch = pop.map(function(img){
+var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
+return img.set("year",y).rename(y);
+});
+
+// Apply the function
+var tchImg = newCollectionToImage(tch).clip(Syria);
+var pop_Syria=tchImg;
+
+
+var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
+print('Population data', Syr_gridpop);
+
+
+
