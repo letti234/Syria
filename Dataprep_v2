@@ -6,12 +6,17 @@ var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
 
 //Conflict site location data
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
-//Map.addLayer(site, {color: 'red'}, 'location');
 
-//Worldpop population data
-var pop = ee.ImageCollection("WorldPop/GP/100m/pop").filterDate('2000', '2010').filterBounds(Syria);
-var pop2 = pop.map(function(image) { return image.clip(Syria); });
-print('Worldpop data', pop2);
+//Worldpop population data 2000-2010 cropped to Syria
+var pop = ee.ImageCollection("WorldPop/GP/100m/pop")
+  .filterDate('2000', '2010')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}) ;
+
+print('Worldpop data', pop);
+Map.addLayer(pop);
+Map.addLayer(site, {color: 'red'}, 'location');
+
 
 //Grid cells over Syria 
 
@@ -20,7 +25,7 @@ var lat_end = 37.31914;
 var lon_start = 35.61394; 
 var lon_end = 42.38504;
 // 2) Decide no. of (in this case: equally sized) cells
-var num_cells = 1000;
+var num_cells = 10;
 var lon_edge = (lon_end-lon_start)/Math.sqrt(num_cells);
 var lat_edge = (lat_end-lat_start)/Math.sqrt(num_cells);
 // 3) Create the grid
@@ -46,7 +51,7 @@ Map.addLayer(grid);
 
 //PREDICTED POPULATION WITHIN EACH GRID CELL ///////////////////////////////////////
 
-//This converts our image collection into a stack of bands
+//This function converts our image collection into a stack of bands
 function newCollectionToImage(collection){
 var stack = ee.Image(collection.iterate(function(img, prev) {
 return ee.Image(prev).addBands(img);
@@ -61,17 +66,14 @@ var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
 return img.set("year",y).rename(y);
 });
 
- 
-// create single image from collection
+// Apply the function
 var tchImg = newCollectionToImage(tch).clip(Syria);
-Map.addLayer(tchImg);
-
 var pop_Syria=tchImg;
-print(pop_Syria);
+
 
 //var pop_grid = pop_Syria.reduceRegions({grid,reducer: 
 //ee.Reducer.sum(), scale: 6000,});
 
 var result = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
-print(result);
+print('Uncleaned pop data', result);
 
