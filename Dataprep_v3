@@ -5,7 +5,8 @@
 //FALL 2019
 /////////////////////////////////////////////////////////////////////////
 
-
+//  V3 builds on V2 by adding nearest urban grid based on a linear and 
+//  least cost path estimator
 
 //////////////////////////////////////////////////////////////////////////
 //DATA IMPORT
@@ -89,8 +90,6 @@ var grid_events = joined.map(function(pt) {
   return(pt);
 });
 
-print('Grids with overall conflict event count', grid_events);
-
 //////////////////////////////////////////////////////////////////////////
 //PREDICTED POPULATION WITHIN EACH GRID CELL
 //////////////////////////////////////////////////////////////////////////
@@ -124,7 +123,6 @@ pop_Syr.select(['2000', '2001', '2002', '2003', '2004', '2005', '2006',
 
 //Sum population counts in the pixels to the grid
 var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
-print('Grid population data', Syr_gridpop);
 
 //////////////////////////////////////////////////////////////////////////
 //MEAN RAINFALL PER MONTH WITHIN EACH GRID CELL 
@@ -151,7 +149,6 @@ var rainfall_Syria=tchImg;
 var Syr_gridrain = 
 rainfall_Syria.
 reduceRegions(grid, ee.Reducer.mean());
-print('Grid rainfall data', Syr_gridrain);
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -176,9 +173,6 @@ var Syriagrid_final=Syriagrid.map(function(pair) {
   var f2 = ee.Feature(pair.get('secondary'));
   return f1.set(f2.toDictionary());
 });
-
-// Print the result.
-print('Rainfall and pop grid data', Syriagrid_final);
 
 //Export //////////////////////////////////////////////////////////
 
@@ -216,7 +210,7 @@ var joined = ee.Join.saveAll({
 });
 
 // Select nearest urban grid
-var withNearestDist = joined.map(function(f) {
+var nearest_UR = joined.map(function(f) {
   var nearestDist = ee.Feature(ee.List(f.get('neighbors')).get(0))
       .get('distance');
   return f.set('nearestDist', nearestDist);
@@ -224,7 +218,7 @@ var withNearestDist = joined.map(function(f) {
 
 
 // Add the ID number of the nearest urban grid 
-var pointdata = withNearestDist.map(function(f) {
+var nearest_UR_ID = nearest_UR.map(function(f) {
   var nearestcity = ee.Feature(ee.List(f.get('neighbors')).get(0))
       .get('urbanid');
   return f.set('urbanid', nearestcity);
