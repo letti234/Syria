@@ -64,8 +64,8 @@ for (var lon = lon_start; lon < lon_end; lon += lon_edge) {
 }
 
 //Final grid, restricted to Syria boundaries
-var grid_v0 = ee.FeatureCollection(polys).filterBounds(Syria);
-print(grid_v0);
+var grid = ee.FeatureCollection(polys).filterBounds(Syria);
+print('Final grid', grid);
 
 //Count number of conflict events per grid cell
 var spatialFilter = ee.Filter.intersects({
@@ -77,19 +77,19 @@ var spatialFilter = ee.Filter.intersects({
 var joined = ee.Join.saveAll({
   matchesKey: 'neighbors', 
 }).apply({
-  primary: grid_v0, 
+  primary: grid, 
   secondary: site, 
   condition: spatialFilter
 });
 
-var grid = joined.map(function(pt) {
+var grid_events = joined.map(function(pt) {
   var neighs = ee.List(pt.get('neighbors'));
-  var filt = ee.Filter.bounds(grid_v0);
+  var filt = ee.Filter.bounds(grid);
   pt=pt.set('events', neighs.filter(filt).size());
   return(pt);
 });
 
-print('Grids with overall conflict event count', grid);
+print('Grids with overall conflict event count', grid_events);
 
 //////////////////////////////////////////////////////////////////////////
 //PREDICTED POPULATION WITHIN EACH GRID CELL
