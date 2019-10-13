@@ -139,6 +139,17 @@ var Syriagrid_final=Syriagrid.map(function(pair) {
 // Print the result.
 print('Rainfall and pop grid data', Syriagrid_final);
 
-//Export ///////////////////////////////////////////////////////
+//Export //////////////////////////////////////////////////////////
 
 Export.table.toDrive(Syriagrid_final, "Syria data v1");
+
+
+//Urban and Rural Dataframes //////////////////////////////////////
+
+//Identify the grids that have a 2005 population less than 20,000
+//For now, these are our "rural" grids
+
+
+
+
+
