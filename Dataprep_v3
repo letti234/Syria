@@ -190,12 +190,11 @@ print('urban grids', urbangrid);
 
 //Least cost path between sample grids and urban grids (will be zero for urban grids)
 
-//Assume nobody is migrating more than 100 miles
+//Distance set very high here due to large size of grids during testing
 var spatialFilter = ee.Filter.withinDistance({
-  distance: 100000,
+  distance: 500000,
   leftField: '.geo',
   rightField: '.geo',
-  maxError: 10
 });
 
 // Join the entire sample of grids to the urban grids
@@ -220,11 +219,16 @@ var nearest_UR = joined.map(function(f) {
 // Add the ID number of the nearest urban grid 
 var nearest_UR_ID = nearest_UR.map(function(f) {
   var nearestcity = ee.Feature(ee.List(f.get('neighbors')).get(0))
-      .get('urbanid');
+      .get('system:index');
   return f.set('urbanid', nearestcity);
 });
 
-print('Grid data with nearest city (linear)', pointdata);
+print('Grid data with nearest city (linear)', nearest_UR_ID);
 
+
+//////////////////////////////////////////////////////////////////////////
+//MINIMIZING LEAST COST PATH BETWEEN GRID AND 
+//NEAREST GRID WITH >=20,000 PEOPLE
+//////////////////////////////////////////////////////////////////////////
 
 
