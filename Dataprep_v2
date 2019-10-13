@@ -153,3 +153,25 @@ var urbangrid = Syriagrid_final.filter(ee.Filter.gt('pop_05', 20000));
 print('urban grids', urbangrid);
 
 
+
+var spatialFilter = ee.Filter.intersects({
+  leftField: '.geo',
+  rightField: '.geo',
+  maxError: 10
+});
+
+var joined = ee.Join.saveAll({
+  matchesKey: 'neighbors', 
+}).apply({
+  primary: grid, 
+  secondary: site, 
+  condition: spatialFilter
+});
+
+var grid_sitecount = grid.map(function(pt) {
+  var neighs = ee.List(pt.get('neighbors'));
+  pt=pt.set('eventcount', neighs);
+  return(pt);
+});
+
+print(grid_sitecount);
