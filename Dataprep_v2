@@ -203,7 +203,7 @@ var spatialFilter = ee.Filter.withinDistance({
   maxError: 10
 });
 
-// Join the points
+// Join the entire sample of grids to the urban grids
 var joined = ee.Join.saveAll({
   matchesKey: 'neighbors', 
   measureKey: 'distance',
@@ -214,7 +214,8 @@ var joined = ee.Join.saveAll({
   condition: spatialFilter
 });
 
-// Get distance to nearest point.
+// Get distance from sample grids to nearest urban grid
+// Distance should be zero for urban grids
 var withNearestDist = joined.map(function(f) {
   var nearestDist = ee.Feature(ee.List(f.get('neighbors')).get(0))
       .get('distance');
@@ -222,13 +223,13 @@ var withNearestDist = joined.map(function(f) {
 });
 
 
-// Add the id number of the nearest camp (for later data merging)
+// Add the ID number of the nearest urban grid 
 var pointdata = withNearestDist.map(function(f) {
   var nearestcity = ee.Feature(ee.List(f.get('neighbors')).get(0))
       .get('urbanid');
   return f.set('urbanid', nearestcity);
 });
 
-print(pointdata);
+print('Grid data with nearest city (linear)', pointdata);
 
 
