@@ -6,6 +6,7 @@ var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
 
 //Conflict site location data
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
+print('event locations', site);
 
 //Worldpop population data 2000-2010 cropped to Syria
 var Allpop = ee.ImageCollection("WorldPop/GP/100m/pop")
@@ -32,7 +33,7 @@ var lat_end = 37.31914;
 var lon_start = 35.61394; 
 var lon_end = 42.38504;
 // 2) Decide no. of (in this case: equally sized) cells
-var num_cells = 1000;
+var num_cells = 10;
 var lon_edge = (lon_end-lon_start)/Math.sqrt(num_cells);
 var lat_edge = (lat_end-lat_start)/Math.sqrt(num_cells);
 // 3) Create the grid
@@ -88,9 +89,7 @@ var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
 print('Grid population data', Syr_gridpop);
 
 
-
 //MEAN RAINFALL PER MONTH WITHIN EACH GRID CELL  ///////////////////////////////////////////////////////
-
 
 function newCollectionToImage(collection){
 var stack = ee.Image(collection.iterate(function(img, prev) {
@@ -141,7 +140,7 @@ print('Rainfall and pop grid data', Syriagrid_final);
 
 //Export //////////////////////////////////////////////////////////
 
-Export.table.toDrive(Syriagrid_final, "Syria data v1");
+//Export.table.toDrive(Syriagrid_final, "Syria data v1");
 
 
 //Urban and Rural Dataframes //////////////////////////////////////
@@ -150,6 +149,7 @@ Export.table.toDrive(Syriagrid_final, "Syria data v1");
 //For now, these are our "rural" grids
 
 
-
+var urbangrid = Syriagrid_final.filter(ee.Filter.gt('pop_05', 20000));
+print('urban grids', urbangrid);
 
 
