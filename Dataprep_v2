@@ -91,8 +91,10 @@ var grid = joined.map(function(pt) {
 
 print('Grids with overall conflict event count', grid);
 
+//////////////////////////////////////////////////////////////////////////
+//PREDICTED POPULATION WITHIN EACH GRID CELL
+//////////////////////////////////////////////////////////////////////////
 
-//PREDICTED POPULATION WITHIN EACH GRID CELL ///////////////////////////////////////
 
 //This function converts our image collection into a stack of bands
 function newCollectionToImage(collection){
@@ -124,8 +126,10 @@ pop_Syr.select(['2000', '2001', '2002', '2003', '2004', '2005', '2006',
 var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
 print('Grid population data', Syr_gridpop);
 
+//////////////////////////////////////////////////////////////////////////
+//MEAN RAINFALL PER MONTH WITHIN EACH GRID CELL 
+//////////////////////////////////////////////////////////////////////////
 
-//MEAN RAINFALL PER MONTH WITHIN EACH GRID CELL  ///////////////////////////////////////////////////////
 
 function newCollectionToImage(collection){
 var stack = ee.Image(collection.iterate(function(img, prev) {
@@ -150,7 +154,9 @@ reduceRegions(grid, ee.Reducer.mean());
 print('Grid rainfall data', Syr_gridrain);
 
 
-//Join the rainfall and population data ////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//JOIN RAINFALL AND POPULATION DATA
+//////////////////////////////////////////////////////////////////////////
 
 
 var toyFilter = ee.Filter.equals({
@@ -179,14 +185,50 @@ print('Rainfall and pop grid data', Syriagrid_final);
 //Export.table.toDrive(Syriagrid_final, "Syria data v1");
 
 
-//Urban and Rural Dataframes //////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//LINEAR DISTANCE BETWEEN GRID AND NEAREST GRID WITH >=20,000 PEOPLE
+//////////////////////////////////////////////////////////////////////////
 
-//Identify the grids that have a 2005 population less than 20,000
-//For now, these are our "rural" grids
-
-
-var urbangrid = Syriagrid_final.filter(ee.Filter.gt('pop_05', 20000));
+//Urban grids
+var urbangrid = Syr_gridpop.filter(ee.Filter.gt('pop_05', 20000));
 print('urban grids', urbangrid);
 
+//Least cost path between sample grids and urban grids (will be zero for urban grids)
+
+//Assume nobody is migrating more than 100 miles
+var spatialFilter = ee.Filter.withinDistance({
+  distance: 100000,
+  leftField: '.geo',
+  rightField: '.geo',
+  maxError: 10
+});
+
+// Join the points
+var joined = ee.Join.saveAll({
+  matchesKey: 'neighbors', 
+  measureKey: 'distance',
+  ordering: 'distance'
+}).apply({
+  primary: grid, 
+  secondary: urbangrid, 
+  condition: spatialFilter
+});
+
+// Get distance to nearest point.
+var withNearestDist = joined.map(function(f) {
+  var nearestDist = ee.Feature(ee.List(f.get('neighbors')).get(0))
+      .get('distance');
+  return f.set('nearestDist', nearestDist);
+});
+
+
+// Add the id number of the nearest camp (for later data merging)
+var pointdata = withNearestDist.map(function(f) {
+  var nearestcity = ee.Feature(ee.List(f.get('neighbors')).get(0))
+      .get('urbanid');
+  return f.set('urbanid', nearestcity);
+});
+
+print(pointdata);
 
 
