@@ -185,52 +185,5 @@ print('Rainfall and pop grid data', Syriagrid_final);
 //Export.table.toDrive(Syriagrid_final, "Syria data v1");
 
 
-//////////////////////////////////////////////////////////////////////////
-//LINEAR DISTANCE BETWEEN GRID AND NEAREST GRID WITH >=20,000 PEOPLE
-//////////////////////////////////////////////////////////////////////////
-
-
-//For testing I use a larger population
-//Urban grids
-var urbangrid = Syr_gridpop.filter(ee.Filter.gt('pop_05', 2000000));
-print('urban grids', urbangrid);
-
-//Least cost path between sample grids and urban grids (will be zero for urban grids)
-
-//Assume nobody is migrating more than 100 miles
-var spatialFilter = ee.Filter.withinDistance({
-  distance: 100000,
-  leftField: '.geo',
-  rightField: '.geo',
-  maxError: 10
-});
-
-// Join the entire sample of grids to the urban grids
-var joined = ee.Join.saveAll({
-  matchesKey: 'neighbors', 
-  measureKey: 'distance',
-  ordering: 'distance'
-}).apply({
-  primary: grid, 
-  secondary: urbangrid, 
-  condition: spatialFilter
-});
-
-// Select nearest urban grid
-var withNearestDist = joined.map(function(f) {
-  var nearestDist = ee.Feature(ee.List(f.get('neighbors')).get(0))
-      .get('distance');
-  return f.set('nearestDist', nearestDist);
-});
-
-
-// Add the ID number of the nearest urban grid 
-var pointdata = withNearestDist.map(function(f) {
-  var nearestcity = ee.Feature(ee.List(f.get('neighbors')).get(0))
-      .get('urbanid');
-  return f.set('urbanid', nearestcity);
-});
-
-print('Grid data with nearest city (linear)', pointdata);
 
 
