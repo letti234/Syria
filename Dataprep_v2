@@ -1,4 +1,15 @@
-//DATA IMPORT/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+//DROUGHT, MIGRATION, AND CONFLICT PAPER - SYRIA
+//COLETTE SALEMI
+//FALL 2019
+/////////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////////
+//DATA IMPORT
+//////////////////////////////////////////////////////////////////////////
 
 //Syria boundary polygon
 var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
@@ -6,7 +17,6 @@ var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
 
 //Conflict site location data
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
-print('event locations', site);
 
 //Worldpop population data 2000-2010 cropped to Syria
 var Allpop = ee.ImageCollection("WorldPop/GP/100m/pop")
@@ -15,24 +25,25 @@ var Allpop = ee.ImageCollection("WorldPop/GP/100m/pop")
   .map(function(image){return image.clip(Syria)}) ;
 
 var pop = Allpop.filterMetadata('country', 'equals', 'SYR');
-print(pop);
-
-print('Worldpop data for Syria', pop);
 
 var rainfall = ee.ImageCollection('TRMM/3B43V7')
   .filterDate('2000', '2011')
   .filterBounds(Syria)
   .map(function(image){return image.clip(Syria)}).select('precipitation') ;
-print('NASA rainfall data', rainfall);
 
 
+//////////////////////////////////////////////////////////////////////////
+//GRIDS
+//////////////////////////////////////////////////////////////////////////
 
-//Produce grid cells over Syria //////////////////////////////////////////// 
+
+//Bounding box over Syria
 var lat_start = 32.31644;
 var lat_end = 37.31914;
 var lon_start = 35.61394; 
 var lon_end = 42.38504;
-// 2) Decide no. of (in this case: equally sized) cells
+
+//Set number of grid cells
 var num_cells = 10;
 var lon_edge = (lon_end-lon_start)/Math.sqrt(num_cells);
 var lat_edge = (lat_end-lat_start)/Math.sqrt(num_cells);
@@ -51,9 +62,34 @@ for (var lon = lon_start; lon < lon_end; lon += lon_edge) {
     polys.push(ee.Feature(ee.Geometry.Rectangle(x1, y1, x2, y2), {label: cell_id}));
   }
 }
-var grid = ee.FeatureCollection(polys).filterBounds(Syria);
-print('Grid', grid)
-Map.addLayer(grid);
+
+//Final grid, restricted to Syria boundaries
+var grid_v0 = ee.FeatureCollection(polys).filterBounds(Syria);
+print(grid_v0);
+
+//Count number of conflict events per grid cell
+var spatialFilter = ee.Filter.intersects({
+  leftField: '.geo',
+  rightField: '.geo',
+  maxError: 10
+});
+
+var joined = ee.Join.saveAll({
+  matchesKey: 'neighbors', 
+}).apply({
+  primary: grid_v0, 
+  secondary: site, 
+  condition: spatialFilter
+});
+
+var grid = joined.map(function(pt) {
+  var neighs = ee.List(pt.get('neighbors'));
+  var filt = ee.Filter.bounds(grid_v0);
+  pt=pt.set('events', neighs.filter(filt).size());
+  return(pt);
+});
+
+print('Grids with overall conflict event count', grid);
 
 
 //PREDICTED POPULATION WITHIN EACH GRID CELL ///////////////////////////////////////
@@ -154,24 +190,3 @@ print('urban grids', urbangrid);
 
 
 
-var spatialFilter = ee.Filter.intersects({
-  leftField: '.geo',
-  rightField: '.geo',
-  maxError: 10
-});
-
-var joined = ee.Join.saveAll({
-  matchesKey: 'neighbors', 
-}).apply({
-  primary: grid, 
-  secondary: site, 
-  condition: spatialFilter
-});
-
-var grid_sitecount = grid.map(function(pt) {
-  var neighs = ee.List(pt.get('neighbors'));
-  pt=pt.set('eventcount', neighs);
-  return(pt);
-});
-
-print(grid_sitecount);
