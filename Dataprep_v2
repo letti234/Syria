@@ -189,8 +189,10 @@ print('Rainfall and pop grid data', Syriagrid_final);
 //LINEAR DISTANCE BETWEEN GRID AND NEAREST GRID WITH >=20,000 PEOPLE
 //////////////////////////////////////////////////////////////////////////
 
+
+//For testing I use a larger population
 //Urban grids
-var urbangrid = Syr_gridpop.filter(ee.Filter.gt('pop_05', 20000));
+var urbangrid = Syr_gridpop.filter(ee.Filter.gt('pop_05', 2000000));
 print('urban grids', urbangrid);
 
 //Least cost path between sample grids and urban grids (will be zero for urban grids)
@@ -214,8 +216,7 @@ var joined = ee.Join.saveAll({
   condition: spatialFilter
 });
 
-// Get distance from sample grids to nearest urban grid
-// Distance should be zero for urban grids
+// Select nearest urban grid
 var withNearestDist = joined.map(function(f) {
   var nearestDist = ee.Feature(ee.List(f.get('neighbors')).get(0))
       .get('distance');
