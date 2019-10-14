@@ -1,15 +1,17 @@
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
-//DROUGHT, MIGRATION, AND CONFLICT PAPER - SYRIA
-//COLETTE SALEMI
-//FALL 2019
+//  DROUGHT, MIGRATION, AND CONFLICT PAPER - SYRIA
+//  COLETTE SALEMI
+//  FALL 2019
 /////////////////////////////////////////////////////////////////////////
 
 //  V3 builds on V2 by adding nearest urban grid based on a linear and 
 //  least cost path estimator
 
 //////////////////////////////////////////////////////////////////////////
-//DATA IMPORT
+//
+//  DATA IMPORT
+//
 //////////////////////////////////////////////////////////////////////////
 
 //Syria boundary polygon
@@ -34,7 +36,9 @@ var rainfall = ee.ImageCollection('TRMM/3B43V7')
 
 
 //////////////////////////////////////////////////////////////////////////
-//GRIDS
+//
+//  GRIDS 
+//
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -74,7 +78,9 @@ Map.addLayer(grid);
 //Map.addLayer(grid3);
 
 //////////////////////////////////////////////////////////////////////////
-//NUMBER OF CONFLICT EVENTS PER GRID CELL
+//
+//  ADD NUMBER OF CONFLICT EVENTS PER GRID CELL
+//
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -100,7 +106,9 @@ var grid_events = joined.map(function(pt) {
 });
 
 //////////////////////////////////////////////////////////////////////////
-//PREDICTED POPULATION WITHIN EACH GRID CELL
+//
+//  ADD PREDICTED POPULATION WITHIN EACH GRID CELL
+//
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -131,7 +139,7 @@ pop_Syr.select(['2000', '2001', '2002', '2003', '2004', '2005', '2006',
 
 
 //Sum population counts in the pixels to the grid
-var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
+var Syr_gridpop = pop_Syria.reduceRegions(grid_events,ee.Reducer.sum());
 
 print("population grids", Syr_gridpop);
 
@@ -215,7 +223,7 @@ var joined = ee.Join.saveAll({
   measureKey: 'distance',
   ordering: 'distance'
 }).apply({
-  primary: grid, 
+  primary: Syriagrid_final, 
   secondary: urbangrid, 
   condition: spatialFilter
 });
@@ -317,5 +325,5 @@ print('Grid data with nearest city (lc)', nearest_UR_ID_LC);
 //EXPORT DATA
 //////////////////////////////////////////////////////////////////////////
 
-//Export.table.toDrive(Syriagrid_final, "Syria data v1");
+//Export.table.toDrive(nearest_UR_ID_LC, "Syria data v1");
 
