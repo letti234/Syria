@@ -180,12 +180,12 @@ var Syriagrid_final=Syriagrid.map(function(pair) {
 //////////////////////////////////////////////////////////////////////////
 
 
-//For testing I use a larger population
+//For testing I use a larger population threshold for "urban"
 //Urban grids
 var urbangrid = Syr_gridpop.filter(ee.Filter.gt('pop_05', 2000000));
 print('urban grids', urbangrid);
+//Least cost path between sample grids and urban grids (will be zero for urban grids))
 
-//Least cost path between sample grids and urban grids (will be zero for urban grids)
 
 //Distance set very high here due to large size of grids during testing
 var spatialFilter = ee.Filter.withinDistance({
@@ -228,9 +228,8 @@ print('Grid data with nearest city (linear)', nearest_UR_ID);
 //NEAREST GRID WITH >=20,000 PEOPLE
 //////////////////////////////////////////////////////////////////////////
 
-// `source' is the thing we're identifying the cost path for
-var geometry = urbangrid
-Map.addLayer(urbangrid);
+
+//Define a least cost path algorithm, based on GEE documentation ////////
 
 // Source image where the urban grids are 1 and all else is zero
 var sources = ee.Image().toByte().paint(geometry, 1);
@@ -259,6 +258,37 @@ var cumulativeCost = cost.cumulativeCost({
   maxDistance: 80 * 1000 // 80 kilometers
 });
 
+//Apply the cumulative cost path algorithm to a join and find the 
+//minimized cost path and associated urban ID
+
+var joined_leastcost = ee.Join.saveAll({
+  matchesKey: 'neighbors', 
+  measureKey: 'distance',
+  ordering: 'cumulativeCost'
+}).apply({
+  primary: grid, 
+  secondary: urbangrid, 
+  condition: spatialFilter
+});
+
+// Select nearest urban grid
+var nearest_UR_LC = joined_leastcost.map(function(f) {
+  var nearestDist_LC = ee.Feature(ee.List(f.get('neighbors')).get(0))
+      .get('distance');
+  return f.set('nearestDist', nearestDist_LC);
+});
+
+print("Step 1 of LC", nearest_UR_LC);
+
+
+// Add the ID number of the nearest urban grid 
+var nearest_UR_ID_LC = nearest_UR_LC.map(function(f) {
+  var nearestcity = ee.Feature(ee.List(f.get('neighbors')).get(0))
+      .get('system:index');
+  return f.set('urbanid_LC', nearestcity);
+});
+
+print('Grid data with nearest city (lc)', nearest_UR_ID_LC);
 
 
 //////////////////////////////////////////////////////////////////////////
