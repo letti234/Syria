@@ -1,0 +1,360 @@
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+//  DROUGHT, MIGRATION, AND CONFLICT PAPER - SYRIA
+//  COLETTE SALEMI
+//  FALL 2019
+/////////////////////////////////////////////////////////////////////////
+
+//  V4 builds on V2 by adding nearest urban grid based on a linear and 
+//  least cost path estimator. 
+//  Output is a small dataframe of grids and a smaller dataframe of conflict
+//  in urban grids
+
+//////////////////////////////////////////////////////////////////////////
+//
+//  DATA IMPORT
+//
+//////////////////////////////////////////////////////////////////////////
+
+//Syria boundary polygon
+var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
+//Map.addLayer(Syria, {color: 'FF0000'}, 'Syria');
+
+//Conflict site location data
+var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
+
+//Worldpop population data 2000-2010 cropped to Syria
+var Allpop = ee.ImageCollection("WorldPop/GP/100m/pop")
+  .filterDate('2000', '2011')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}) ;
+
+var pop = Allpop.filterMetadata('country', 'equals', 'SYR');
+
+var rainfall = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2000', '2011')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation') ;
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+//  GRIDS 
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+//Bounding box over Syria
+var lat_start = 32.31644;
+var lat_end = 37.31914;
+var lon_start = 35.61394; 
+var lon_end = 42.38504;
+
+//Set number of grid cells
+var num_cells = 10;
+var lon_edge = (lon_end-lon_start)/Math.sqrt(num_cells);
+var lat_edge = (lat_end-lat_start)/Math.sqrt(num_cells);
+// 3) Create the grid
+var polys = [];
+var polys_line = [];
+var cell_id = 0;
+for (var lon = lon_start; lon < lon_end; lon += lon_edge) {
+  var x1 = lon;
+  var x2 = lon + lon_edge;
+  for (var lat = lat_start; lat < lat_end; lat += lat_edge) {
+    cell_id = cell_id + 1;
+    var y1 = lat;
+    var y2 = lat + lat_edge;
+
+    polys.push(ee.Feature(ee.Geometry.Rectangle(x1, y1, x2, y2), {label: cell_id}));
+  }
+}
+
+//Final grid, restricted to Syria boundaries
+var grid = ee.FeatureCollection(polys).filterBounds(Syria);
+print('Final grid', grid);
+Map.addLayer(grid);
+
+//To figure out where the grids are based on ID
+//var grid10 = grid.filter(ee.Filter.eq("system:index", "10"));
+//Map.addLayer(grid3);
+
+//////////////////////////////////////////////////////////////////////////
+//
+//  ADD NUMBER OF CONFLICT EVENTS PER GRID CELL
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+var spatialFilter = ee.Filter.intersects({
+  leftField: '.geo',
+  rightField: '.geo',
+  maxError: 10
+});
+
+var joined = ee.Join.saveAll({
+  matchesKey: 'neighbors', 
+}).apply({
+  primary: grid, 
+  secondary: site, 
+  condition: spatialFilter
+});
+
+var grid_events = joined.map(function(pt) {
+  var neighs = ee.List(pt.get('neighbors'));
+  var filt = ee.Filter.bounds(grid);
+  pt=pt.set('events', neighs.filter(filt).size());
+  return(pt);
+});
+
+//////////////////////////////////////////////////////////////////////////
+//
+//  ADD PREDICTED POPULATION WITHIN EACH GRID CELL
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+//This function converts our image collection into a stack of bands
+function newCollectionToImage(collection){
+var stack = ee.Image(collection.iterate(function(img, prev) {
+return ee.Image(prev).addBands(img);
+}, ee.Image(1)));
+ 
+stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
+return stack;
+}
+
+//Apply the function
+var tch = pop.map(function(img){
+var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
+return img.set("year",y).rename(y);
+});
+
+var tchImg = newCollectionToImage(tch).clip(Syria);
+var pop_Syr=tchImg;
+
+var pop_Syria = 
+pop_Syr.select(['2000', '2001', '2002', '2003', '2004', '2005', '2006',
+'2007', '2008', '2009', '2010'],
+['pop_00', 'pop_01', 'pop_02', 'pop_03', 'pop_04', 'pop_05', 'pop_06',
+'pop_07', 'pop_08', 'pop_09', 'pop_10']);
+
+
+//Sum population counts in the pixels to the grid
+var Syr_gridpop = pop_Syria.reduceRegions(grid_events,ee.Reducer.sum());
+
+print("population grids", Syr_gridpop);
+
+//////////////////////////////////////////////////////////////////////////
+//MEAN RAINFALL PER MONTH WITHIN EACH GRID CELL 
+//////////////////////////////////////////////////////////////////////////
+
+
+function newCollectionToImage(collection){
+var stack = ee.Image(collection.iterate(function(img, prev) {
+return ee.Image(prev).addBands(img);
+}, ee.Image(1)));
+ 
+stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
+return stack;
+}
+
+var tch = rainfall.map(function(img){
+var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
+return img.set("year",y).rename(y);
+});
+
+var tchImg = newCollectionToImage(tch).clip(Syria);
+var rainfall_Syria=tchImg;
+
+var Syr_gridrain = 
+rainfall_Syria.
+reduceRegions(grid, ee.Reducer.mean());
+
+
+//////////////////////////////////////////////////////////////////////////
+//JOIN RAINFALL AND POPULATION DATA
+//////////////////////////////////////////////////////////////////////////
+
+
+var toyFilter = ee.Filter.equals({
+  leftField: 'system:index',
+  rightField: 'system:index'
+});
+
+// Define the join.
+var innerJoin = ee.Join.inner();
+
+// Apply the join.
+var Syriagrid = innerJoin.apply(Syr_gridpop, Syr_gridrain,  toyFilter);
+print('Preliminary feature collection', Syriagrid);
+
+var Syriagrid_final=Syriagrid.map(function(pair) {
+  var f1 = ee.Feature(pair.get('primary'));
+  var f2 = ee.Feature(pair.get('secondary'));
+  return f1.set(f2.toDictionary());
+});
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+//LINEAR DISTANCE BETWEEN GRID AND NEAREST GRID WITH >=20,000 PEOPLE
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+//For testing I use a larger population threshold for "urban"
+//Urban grids
+var urbangrid = Syr_gridpop.filter(ee.Filter.gt('pop_05', 2000000));
+print('urban grids', urbangrid);
+
+//To figure out where the grids are based on ID
+var urbangrid2 = urbangrid.filter(ee.Filter.eq("system:index", "2"));
+Map.addLayer(urbangrid2);
+
+//Distance set very high here due to large size of grids during testing
+var spatialFilter = ee.Filter.withinDistance({
+  distance: 500000,
+  leftField: '.geo',
+  rightField: '.geo',
+});
+
+// Join the entire sample of grids to the urban grids
+var joined = ee.Join.saveAll({
+  matchesKey: 'neighbors', 
+  measureKey: 'distance',
+  ordering: 'distance'
+}).apply({
+  primary: Syriagrid_final, 
+  secondary: urbangrid, 
+  condition: spatialFilter
+});
+
+// Select nearest urban grid
+var nearest_UR = joined.map(function(f) {
+  var nearestDist = ee.Feature(ee.List(f.get('neighbors')).get(0))
+      .get('distance');
+  return f.set('nearestDist_LIN', nearestDist);
+});
+
+
+// Add the ID number of the nearest urban grid 
+var nearest_UR_ID = nearest_UR.map(function(f) {
+  var nearestcity = ee.Feature(ee.List(f.get('neighbors')).get(0))
+      .get('system:index');
+  return f.set('urbanid_LIN', nearestcity);
+});
+
+print('Grid data with nearest city (linear)', nearest_UR_ID);
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+//MINIMIZING LEAST COST PATH BETWEEN GRID AND 
+//NEAREST GRID WITH >=20,000 PEOPLE
+//
+//Takes dataframe produced above and results in a dataframe that identifies
+//Closest urban grid based on both linear and cumulative cost calculations.
+//
+//////////////////////////////////////////////////////////////////////////
+
+//Cumulative cost algorithm 
+
+// Source image where the urban grids are 1 and all else is zero
+var sources = ee.Image().toByte().paint(urbangrid, 1);
+
+// Mask the sources image with itself.
+sources = sources.updateMask(sources);
+
+// The cost data is generated from classes in ESA/GLOBCOVER.
+var cover = ee.Image('ESA/GLOBCOVER_L4_200901_200912_V2_3').select(0);
+
+var Syriacover=cover.clip(Syria);
+Map.addLayer(Syriacover);
+
+// Classes 60, 80, 110, 140 have cost 1.
+// Classes 40, 90, 120, 130, 170 have cost 2.
+// Classes 50, 70, 150, 160 have cost 3.
+var cost =
+  cover.eq(60).or(cover.eq(80)).or(cover.eq(110)).or(cover.eq(140))
+      .multiply(1).add(
+  cover.eq(40).or(cover.eq(90)).or(cover.eq(120)).or(cover.eq(130))
+    .or(cover.eq(170))
+      .multiply(2).add(
+  cover.eq(50).or(cover.eq(70)).or(cover.eq(150)).or(cover.eq(160))
+      .multiply(3)));
+
+// Compute the cumulative cost to traverse the land cover.
+var cumulativeCost = cost.cumulativeCost({
+  source: sources,
+  maxDistance: 80 * 1000 // 80 kilometers
+});
+
+//Join the grids and identify the cumulative costs between them
+
+var joined_leastcost = ee.Join.saveAll({
+  matchesKey: 'neighbors', 
+  measureKey: 'distance',
+  ordering: 'cumulativeCost'
+}).apply({
+  primary: nearest_UR_ID, 
+  secondary: urbangrid, 
+  condition: spatialFilter
+});
+
+// Minimize the cost path to find "nearest" urban grid
+
+var nearest_UR_LC = joined_leastcost.map(function(f) {
+  var nearestDist_LC = ee.Feature(ee.List(f.get('neighbors')).get(0))
+      .get('distance');
+  return f.set('nearestDist_LC', nearestDist_LC);
+});
+
+print("Step 1 of LC", nearest_UR_LC);
+
+
+// Add the ID number of the nearest urban grid 
+var nearest_UR_ID_LC = nearest_UR_LC.map(function(f) {
+  var nearestcity = ee.Feature(ee.List(f.get('neighbors')).get(0))
+      .get('system:index');
+  return f.set('urbanid_LC', nearestcity);
+});
+
+print('Grid data with nearest city (lc)', nearest_UR_ID_LC);
+
+//////////////////////////////////////////////////////////////////////////
+//
+//  ADD NUMBER OF CONFLICT EVENTS PER GRID URBAN CELL
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+var spatialFilter = ee.Filter.intersects({
+  leftField: '.geo',
+  rightField: '.geo',
+  maxError: 10
+});
+
+var joined = ee.Join.saveAll({
+  matchesKey: 'neighbors', 
+}).apply({
+  primary: urbangrid, 
+  secondary: site, 
+  condition: spatialFilter
+});
+
+var grid_events_UR = joined.map(function(pt) {
+  var neighs = ee.List(pt.get('neighbors'));
+  var filt = ee.Filter.bounds(grid);
+  pt=pt.set('events', neighs.filter(filt).size());
+  return(pt);
+});
+
+print("Urban grids conflict", grid_events_UR);
+
+//////////////////////////////////////////////////////////////////////////
+//EXPORT DATA
+//////////////////////////////////////////////////////////////////////////
+
+//Export.table.toDrive(nearest_UR_ID_LC, "Syria data v3 allgrids");
+//Export.table.toDrive(nearest_UR_ID_LC, "Syria data v3 urbangrids");
