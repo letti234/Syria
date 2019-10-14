@@ -67,6 +67,7 @@ for (var lon = lon_start; lon < lon_end; lon += lon_edge) {
 //Final grid, restricted to Syria boundaries
 var grid = ee.FeatureCollection(polys).filterBounds(Syria);
 print('Final grid', grid);
+Map.addLayer(grid);
 
 //To figure out where the grids are based on ID
 //var grid10 = grid.filter(ee.Filter.eq("system:index", "10"));
@@ -257,6 +258,9 @@ sources = sources.updateMask(sources);
 
 // The cost data is generated from classes in ESA/GLOBCOVER.
 var cover = ee.Image('ESA/GLOBCOVER_L4_200901_200912_V2_3').select(0);
+
+var Syriacover=cover.clip(Syria);
+Map.addLayer(Syriacover);
 
 // Classes 60, 80, 110, 140 have cost 1.
 // Classes 40, 90, 120, 130, 170 have cost 2.
