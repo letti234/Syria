@@ -7,7 +7,8 @@
 
 //  V3 builds on V2 by adding nearest urban grid based on a linear and 
 //  least cost path estimator. 
-//  Output is a small dataframe of grids
+//  Output is a small dataframe of grids and a smaller dataframe of conflict
+//  in urban grids
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -321,6 +322,35 @@ var nearest_UR_ID_LC = nearest_UR_LC.map(function(f) {
 
 print('Grid data with nearest city (lc)', nearest_UR_ID_LC);
 
+//////////////////////////////////////////////////////////////////////////
+//
+//  ADD NUMBER OF CONFLICT EVENTS PER GRID URBAN CELL
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+var spatialFilter = ee.Filter.intersects({
+  leftField: '.geo',
+  rightField: '.geo',
+  maxError: 10
+});
+
+var joined = ee.Join.saveAll({
+  matchesKey: 'neighbors', 
+}).apply({
+  primary: urbangrid, 
+  secondary: site, 
+  condition: spatialFilter
+});
+
+var grid_events_UR = joined.map(function(pt) {
+  var neighs = ee.List(pt.get('neighbors'));
+  var filt = ee.Filter.bounds(grid);
+  pt=pt.set('events', neighs.filter(filt).size());
+  return(pt);
+});
+
+print("Urban grids conflict", grid_events_UR);
 
 //////////////////////////////////////////////////////////////////////////
 //EXPORT DATA
