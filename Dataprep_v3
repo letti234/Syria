@@ -209,7 +209,7 @@ var joined = ee.Join.saveAll({
 var nearest_UR = joined.map(function(f) {
   var nearestDist = ee.Feature(ee.List(f.get('neighbors')).get(0))
       .get('distance');
-  return f.set('nearestDist', nearestDist);
+  return f.set('nearestDist_LIN', nearestDist);
 });
 
 
@@ -217,22 +217,26 @@ var nearest_UR = joined.map(function(f) {
 var nearest_UR_ID = nearest_UR.map(function(f) {
   var nearestcity = ee.Feature(ee.List(f.get('neighbors')).get(0))
       .get('system:index');
-  return f.set('urbanid', nearestcity);
+  return f.set('urbanid_LIN', nearestcity);
 });
 
 print('Grid data with nearest city (linear)', nearest_UR_ID);
 
 
 //////////////////////////////////////////////////////////////////////////
+//
 //MINIMIZING LEAST COST PATH BETWEEN GRID AND 
 //NEAREST GRID WITH >=20,000 PEOPLE
+//
+//Takes dataframe produced above and results in a dataframe that identifies
+//Closest urban grid based on both linear and cumulative cost calculations.
+//
 //////////////////////////////////////////////////////////////////////////
 
-
-//Define a least cost path algorithm, based on GEE documentation ////////
+//Cumulative cost algorithm 
 
 // Source image where the urban grids are 1 and all else is zero
-var sources = ee.Image().toByte().paint(geometry, 1);
+var sources = ee.Image().toByte().paint(urbangrid, 1);
 
 // Mask the sources image with itself.
 sources = sources.updateMask(sources);
@@ -258,24 +262,24 @@ var cumulativeCost = cost.cumulativeCost({
   maxDistance: 80 * 1000 // 80 kilometers
 });
 
-//Apply the cumulative cost path algorithm to a join and find the 
-//minimized cost path and associated urban ID
+//Join the grids and identify the cumulative costs between them
 
 var joined_leastcost = ee.Join.saveAll({
   matchesKey: 'neighbors', 
   measureKey: 'distance',
   ordering: 'cumulativeCost'
 }).apply({
-  primary: grid, 
+  primary: nearest_UR_ID, 
   secondary: urbangrid, 
   condition: spatialFilter
 });
 
-// Select nearest urban grid
+// Minimize the cost path to find "nearest" urban grid
+
 var nearest_UR_LC = joined_leastcost.map(function(f) {
   var nearestDist_LC = ee.Feature(ee.List(f.get('neighbors')).get(0))
       .get('distance');
-  return f.set('nearestDist', nearestDist_LC);
+  return f.set('nearestDist_LC', nearestDist_LC);
 });
 
 print("Step 1 of LC", nearest_UR_LC);
