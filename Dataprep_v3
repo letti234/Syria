@@ -68,7 +68,15 @@ for (var lon = lon_start; lon < lon_end; lon += lon_edge) {
 var grid = ee.FeatureCollection(polys).filterBounds(Syria);
 print('Final grid', grid);
 
-//Count number of conflict events per grid cell
+//To figure out where the grids are based on ID
+//var grid10 = grid.filter(ee.Filter.eq("system:index", "10"));
+//Map.addLayer(grid3);
+
+//////////////////////////////////////////////////////////////////////////
+//NUMBER OF CONFLICT EVENTS PER GRID CELL
+//////////////////////////////////////////////////////////////////////////
+
+
 var spatialFilter = ee.Filter.intersects({
   leftField: '.geo',
   rightField: '.geo',
@@ -124,6 +132,8 @@ pop_Syr.select(['2000', '2001', '2002', '2003', '2004', '2005', '2006',
 //Sum population counts in the pixels to the grid
 var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
 
+print("population grids", Syr_gridpop);
+
 //////////////////////////////////////////////////////////////////////////
 //MEAN RAINFALL PER MONTH WITHIN EACH GRID CELL 
 //////////////////////////////////////////////////////////////////////////
@@ -176,7 +186,9 @@ var Syriagrid_final=Syriagrid.map(function(pair) {
 
 
 //////////////////////////////////////////////////////////////////////////
+//
 //LINEAR DISTANCE BETWEEN GRID AND NEAREST GRID WITH >=20,000 PEOPLE
+//
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -184,8 +196,10 @@ var Syriagrid_final=Syriagrid.map(function(pair) {
 //Urban grids
 var urbangrid = Syr_gridpop.filter(ee.Filter.gt('pop_05', 2000000));
 print('urban grids', urbangrid);
-//Least cost path between sample grids and urban grids (will be zero for urban grids))
 
+//To figure out where the grids are based on ID
+var urbangrid2 = urbangrid.filter(ee.Filter.eq("system:index", "2"));
+Map.addLayer(urbangrid2);
 
 //Distance set very high here due to large size of grids during testing
 var spatialFilter = ee.Filter.withinDistance({
