@@ -5,10 +5,12 @@
 //  FALL 2019
 /////////////////////////////////////////////////////////////////////////
 
-//  V4 builds on V2 by adding nearest urban grid based on a linear and 
-//  least cost path estimator. 
-//  Output is a small dataframe of grids and a smaller dataframe of conflict
-//  in urban grids
+//  V4 expands the 12-grid test sample from V3 to a 1000 grid sample
+//  Urban population is now defined as 20,000 persons or more.
+
+//  Future iterations will need to determine how to account for grid
+//  lines overlapping cities where the conflict event is identified
+//  as the city' central node
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -51,7 +53,7 @@ var lon_start = 35.61394;
 var lon_end = 42.38504;
 
 //Set number of grid cells
-var num_cells = 10;
+var num_cells = 1000;
 var lon_edge = (lon_end-lon_start)/Math.sqrt(num_cells);
 var lat_edge = (lat_end-lat_start)/Math.sqrt(num_cells);
 // 3) Create the grid
@@ -202,10 +204,8 @@ var Syriagrid_final=Syriagrid.map(function(pair) {
 //
 //////////////////////////////////////////////////////////////////////////
 
-
-//For testing I use a larger population threshold for "urban"
 //Urban grids
-var urbangrid = Syr_gridpop.filter(ee.Filter.gt('pop_05', 2000000));
+var urbangrid = Syr_gridpop.filter(ee.Filter.gt('pop_05', 20000));
 print('urban grids', urbangrid);
 
 //To figure out where the grids are based on ID
@@ -356,5 +356,5 @@ print("Urban grids conflict", grid_events_UR);
 //EXPORT DATA
 //////////////////////////////////////////////////////////////////////////
 
-//Export.table.toDrive(nearest_UR_ID_LC, "Syria data v3 allgrids");
-//Export.table.toDrive(nearest_UR_ID_LC, "Syria data v3 urbangrids");
+Export.table.toDrive(nearest_UR_ID_LC, "Syria data v3 allgrids");
+Export.table.toDrive(nearest_UR_ID_LC, "Syria data v3 urbangrids");
