@@ -36,6 +36,7 @@ var rainfall = ee.ImageCollection('TRMM/3B43V7')
   .filterDate('2000', '2011')
   .filterBounds(Syria)
   .map(function(image){return image.clip(Syria)}).select('precipitation') ;
+print("rainfall", rainfall);
 
 
 //////////////////////////////////////////////////////////////////////////
