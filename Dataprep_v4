@@ -356,5 +356,5 @@ print("Urban grids conflict", grid_events_UR);
 //EXPORT DATA
 //////////////////////////////////////////////////////////////////////////
 
-Export.table.toDrive(nearest_UR_ID_LC, "Syria data v3 allgrids");
-Export.table.toDrive(nearest_UR_ID_LC, "Syria data v3 urbangrids");
+Export.table.toDrive(nearest_UR_ID_LC, "Syria_data_v4_allgrids");
+Export.table.toDrive(nearest_UR_ID_LC, "Syria_data_v4_urbangrids");
