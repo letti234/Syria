@@ -12,6 +12,8 @@
 //  lines overlapping cities where the conflict event is identified
 //  as the city' central node
 
+
+
 //////////////////////////////////////////////////////////////////////////
 //
 //  DATA IMPORT
@@ -32,11 +34,13 @@ var Allpop = ee.ImageCollection("WorldPop/GP/100m/pop")
   .map(function(image){return image.clip(Syria)}) ;
 
 var pop = Allpop.filterMetadata('country', 'equals', 'SYR');
+print("Worldpop data", pop);
 
 var rainfall = ee.ImageCollection('TRMM/3B43V7')
   .filterDate('2000', '2011')
   .filterBounds(Syria)
   .map(function(image){return image.clip(Syria)}).select('precipitation') ;
+print("rainfall", rainfall);
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -109,6 +113,7 @@ var grid_events = joined.map(function(pt) {
   return(pt);
 });
 
+print("Grids with pop counts", grid_events);
 //////////////////////////////////////////////////////////////////////////
 //
 //  ADD PREDICTED POPULATION WITHIN EACH GRID CELL
@@ -143,7 +148,7 @@ pop_Syr.select(['2000', '2001', '2002', '2003', '2004', '2005', '2006',
 
 
 //Sum population counts in the pixels to the grid
-var Syr_gridpop = pop_Syria.reduceRegions(grid_events,ee.Reducer.sum());
+var Syr_gridpop = pop_Syria.reduceRegions(grid,ee.Reducer.sum());
 
 print("population grids", Syr_gridpop);
 
@@ -204,6 +209,8 @@ var Syriagrid_final=Syriagrid.map(function(pair) {
 //
 //////////////////////////////////////////////////////////////////////////
 
+
+//For testing I use a larger population threshold for "urban"
 //Urban grids
 var urbangrid = Syr_gridpop.filter(ee.Filter.gt('pop_05', 20000));
 print('urban grids', urbangrid);
@@ -324,7 +331,7 @@ print('Grid data with nearest city (lc)', nearest_UR_ID_LC);
 
 //////////////////////////////////////////////////////////////////////////
 //
-//  ADD NUMBER OF CONFLICT EVENTS PER GRID URBAN CELL
+//  ADD NUMBER OF CONFLICT EVENTS PER URBAN GRIDCELL
 //
 //////////////////////////////////////////////////////////////////////////
 
@@ -353,8 +360,39 @@ var grid_events_UR = joined.map(function(pt) {
 print("Urban grids conflict", grid_events_UR);
 
 //////////////////////////////////////////////////////////////////////////
+//
+//  ADD NUMBER OF CONFLICT EVENTS PER GRIDCELL
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+var spatialFilter = ee.Filter.intersects({
+  leftField: '.geo',
+  rightField: '.geo',
+  maxError: 10
+});
+
+var joined = ee.Join.saveAll({
+  matchesKey: 'neighbors', 
+}).apply({
+  primary: grid, 
+  secondary: site, 
+  condition: spatialFilter
+});
+
+var grid_events_T = joined.map(function(pt) {
+  var neighs = ee.List(pt.get('neighbors'));
+  var filt = ee.Filter.bounds(grid);
+  pt=pt.set('events', neighs.filter(filt).size());
+  return(pt);
+});
+
+print("Grids conflict", grid_events_T);
+
+//////////////////////////////////////////////////////////////////////////
 //EXPORT DATA
 //////////////////////////////////////////////////////////////////////////
 
-Export.table.toDrive(nearest_UR_ID_LC, "Syria_data_v4_allgrids");
-Export.table.toDrive(nearest_UR_ID_LC, "Syria_data_v4_urbangrids");
+Export.table.toDrive(nearest_UR_ID_LC, "Syria data v3 allgrids");
+Export.table.toDrive(grid_events_UR, "Syria data v3 conflict urbangrids");
+Export.table.toDrive(grid_events_T, "Syria data v3 conflict grids");
