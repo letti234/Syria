@@ -393,6 +393,6 @@ print("Grids conflict", grid_events_T);
 //EXPORT DATA
 //////////////////////////////////////////////////////////////////////////
 
-Export.table.toDrive(nearest_UR_ID_LC, "Syria data v3 allgrids");
-Export.table.toDrive(grid_events_UR, "Syria data v3 conflict urbangrids");
-Export.table.toDrive(grid_events_T, "Syria data v3 conflict grids");
+Export.table.toDrive(nearest_UR_ID_LC, "Syria data v4 allgrids");
+Export.table.toDrive(grid_events_UR, "Syria data v4 conflict urbangrids");
+Export.table.toDrive(grid_events_T, "Syria data v4 conflict grids");
