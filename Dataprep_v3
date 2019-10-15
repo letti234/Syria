@@ -30,6 +30,7 @@ var Allpop = ee.ImageCollection("WorldPop/GP/100m/pop")
   .map(function(image){return image.clip(Syria)}) ;
 
 var pop = Allpop.filterMetadata('country', 'equals', 'SYR');
+print("Worldpop data", pop);
 
 var rainfall = ee.ImageCollection('TRMM/3B43V7')
   .filterDate('2000', '2011')
