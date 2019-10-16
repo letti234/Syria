@@ -366,33 +366,7 @@ var grid_events_UR = joined.map(function(pt) {
 print("Urban grids conflict", grid_events_UR);
 
 
-//This function converts our image collection into a stack of bands
-function newCollectionToImage(collection){
-var stack = ee.Image(collection.iterate(function(img, prev) {
-return ee.Image(prev).addBands(img);
-}, ee.Image(1)));
- 
-stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
-return stack;
-}
 
-//Apply the function
-var tch = pop.map(function(img){
-var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
-return img.set("year",y).rename(y);
-});
-
-var tchImg = newCollectionToImage(tch).clip(Syria);
-var pop_Syr_U=tchImg;
-
-var pop_Syria_U = 
-pop_Syr_U.select(['2000', '2001', '2002', '2003', '2004', '2005', '2006',
-'2007', '2008', '2009', '2010'],
-['pop_00', 'pop_01', 'pop_02', 'pop_03', 'pop_04', 'pop_05', 'pop_06',
-'pop_07', 'pop_08', 'pop_09', 'pop_10']);
-
-
-//Sum population counts in the pixels to the grid
 var Syr_gridpop_u = pop_Syria.reduceRegions(grid_events_U,ee.Reducer.sum());
 
 print("population grids", Syr_gridpop_U);
