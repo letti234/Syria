@@ -378,4 +378,4 @@ print("population grids", Syr_gridpop_u);
 
 Export.table.toDrive(nearest_UR_ID_LC, "Syria_data_allgrids_v4");
 Export.table.toDrive(grid_events_UR, "Syria data_urban_conflict_grids_v4");
-Export.table.toDrive(grid_events_u, "Syria_data_urban_pop_grids_v4");
+Export.table.toDrive(Syr_gridpop_u, "Syria_data_urban_pop_grids_v4");
