@@ -29,7 +29,7 @@ var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
 
 //Worldpop population data 2000-2010 cropped to Syria
 var Allpop = ee.ImageCollection("WorldPop/GP/100m/pop")
-  .filterDate('2000', '2011')
+  .filterDate('2000', '2012')
   .filterBounds(Syria)
   .map(function(image){return image.clip(Syria)}) ;
 
@@ -143,9 +143,9 @@ var pop_Syr=tchImg;
 
 var pop_Syria = 
 pop_Syr.select(['2000', '2001', '2002', '2003', '2004', '2005', '2006',
-'2007', '2008', '2009', '2010'],
+'2007', '2008', '2009', '2010', '2011'],
 ['pop_00', 'pop_01', 'pop_02', 'pop_03', 'pop_04', 'pop_05', 'pop_06',
-'pop_07', 'pop_08', 'pop_09', 'pop_10']);
+'pop_07', 'pop_08', 'pop_09', 'pop_10', 'pop_11']);
 
 
 //Sum population counts in the pixels to the grid
