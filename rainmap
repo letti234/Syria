@@ -35,4 +35,9 @@ var mean = rainfall.reduce(ee.Reducer.mean());
 Map.addLayer(mean);
 print(mean);
 
-Find means for the different governorates
+Export.image.toDrive({
+  image: mean,
+  description: 'mean_rainfall_2008',
+  scale: 30,
+  region: Syria
+});
