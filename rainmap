@@ -31,3 +31,8 @@ print("rainfall b", rainfall_b);
 var rainfall = rainfall_a.merge(rainfall_b);
 print(rainfall);
 
+var mean = rainfall.reduce(ee.Reducer.mean());
+Map.addLayer(mean);
+print(mean);
+
+Find means for the different governorates
