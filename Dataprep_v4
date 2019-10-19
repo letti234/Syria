@@ -81,6 +81,18 @@ var grid = ee.FeatureCollection(polys).filterBounds(Syria);
 print('Final grid', grid);
 Map.addLayer(grid);
 
+//Find area of one grid cell
+
+var polygon = ee.Geometry.Polygon([
+  [[35.61394,33.10743632252621], 
+  [35.82806098264766,33.10743632252621],
+  [35.82806098264766,33.265635587031454], 
+  [35.61394,33.265635587031454], 
+  [35.61394,33.10743632252621]]
+]);
+Map.addLayer(polygon);
+print('Polygon area: ', polygon.area().divide(1000 * 1000));
+
 //To figure out where the grids are based on ID
 //var grid10 = grid.filter(ee.Filter.eq("system:index", "10"));
 //Map.addLayer(grid3);
