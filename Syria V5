@@ -25,8 +25,9 @@ var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
 //Map.addLayer(Syria, {color: 'FF0000'}, 'Syria');
 
 //World cities
-var citiesWorld = ee.FeatureCollection('users/salem043/worldCities').
-filterMetadata('country', 'equals', 'Syria');
+var citiesWorld = ee.FeatureCollection('users/salem043/worldCities');
+var cities = citiesWorld.filterMetadata('country', 'equals', 'Syria');
+Map.addLayer(cities, {}, "Larger cities in Syria");
 
 //Conflict site location data
 var site = ee.FeatureCollection('ft:1UNSrVLRJihOaHiXKYZNR_OIR3_E6PBuawdd1mKsU');
