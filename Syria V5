@@ -168,18 +168,16 @@ var drought09 = ee.ImageCollection('TRMM/3B43V7')
   .filterBounds(Syria)
   .map(function(image){return image.clip(Syria)}).select('precipitation');
 
-var mean06 = ee.ImageCollection('TRMM/3B43V7')
-  .filterDate('20010-01-01', '2011-01-01')
+var drought10 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2010-01-01', '2011-01-01')
   .filterBounds(Syria)
   .map(function(image){return image.clip(Syria)}).select('precipitation');
-
-
-
-var ndwiViz = {min: 0, max: 1000000, palette: ['00FFFF', '0000FF']};
-Map.addLayer(mean06, ndwiViz, "2006 mean rainfall winter season")
-
+  
+var mean06 = drought06.reduce(ee.Reducer.mean());
 var mean07 = drought07.reduce(ee.Reducer.mean());
+var mean08 = drought08.reduce(ee.Reducer.mean());
+var mean09 = drought09.reduce(ee.Reducer.mean());
+var mean10 = drought10.reduce(ee.Reducer.mean());
 
-
-
-
+var seasonalMeans = ee.ImageCollection([mean06, mean07]);
+print(seasonalMeans);
