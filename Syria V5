@@ -46,6 +46,7 @@ var rainfall = ee.ImageCollection('TRMM/3B43V7')
 print("rainfall", rainfall);
 
 
+var drought10 = rainfall.filterDate('2010-11-01', '2011-03-01')
 //////////////////////////////////////////////////////////////////////////
 //
 //  BUFFER MEAN RAINFALL DURING RAINY SEASONS
@@ -141,5 +142,44 @@ Export.table.toDrive({
   description: 'SyriaPopRainData',
   folder: "Climate and conflict in Syria"
 });
+
+
+
+
+///////
+//Get rainfall rasters for drought years
+
+
+var drought06 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2006-11-01', '2007-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+print(drought06, "2006-2007 monthly rainfall");
+var drought07 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2007-11-01', '2008-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+var drought08 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2008-11-01', '2009-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+var drought09 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2009-01-01', '20010-01-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var mean06 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('20010-01-01', '2011-01-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+
+
+var ndwiViz = {min: 0, max: 1000000, palette: ['00FFFF', '0000FF']};
+Map.addLayer(mean06, ndwiViz, "2006 mean rainfall winter season")
+
+var mean07 = drought07.reduce(ee.Reducer.mean());
+
+
 
 
