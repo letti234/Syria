@@ -149,6 +149,35 @@ Export.table.toDrive({
 ///////
 //Get rainfall rasters for drought years
 
+var drought00 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2000-11-01', '2001-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var drought01 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2001-11-01', '2002-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var drought02 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2002-11-01', '2003-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var drought03 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2003-11-01', '2004-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var drought04 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2004-11-01', '2005-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+  
+var drought05 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2005-11-01', '2006-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
 
 var drought06 = ee.ImageCollection('TRMM/3B43V7')
   .filterDate('2006-11-01', '2007-03-01')
@@ -164,20 +193,130 @@ var drought08 = ee.ImageCollection('TRMM/3B43V7')
   .filterBounds(Syria)
   .map(function(image){return image.clip(Syria)}).select('precipitation');
 var drought09 = ee.ImageCollection('TRMM/3B43V7')
-  .filterDate('2009-01-01', '20010-01-01')
+  .filterDate('2009-01-01', '2010-03-01')
   .filterBounds(Syria)
   .map(function(image){return image.clip(Syria)}).select('precipitation');
 
 var drought10 = ee.ImageCollection('TRMM/3B43V7')
-  .filterDate('2010-01-01', '2011-01-01')
+  .filterDate('2010-01-01', '2011-03-01')
   .filterBounds(Syria)
   .map(function(image){return image.clip(Syria)}).select('precipitation');
   
+  
+var mean00 = drought00.reduce(ee.Reducer.mean());
+var mean01 = drought01.reduce(ee.Reducer.mean());
+var mean02 = drought02.reduce(ee.Reducer.mean());
+var mean03 = drought03.reduce(ee.Reducer.mean());
+var mean04 = drought04.reduce(ee.Reducer.mean());
+var mean05 = drought05.reduce(ee.Reducer.mean());
 var mean06 = drought06.reduce(ee.Reducer.mean());
 var mean07 = drought07.reduce(ee.Reducer.mean());
 var mean08 = drought08.reduce(ee.Reducer.mean());
 var mean09 = drought09.reduce(ee.Reducer.mean());
 var mean10 = drought10.reduce(ee.Reducer.mean());
 
-var seasonalMeans = ee.ImageCollection([mean06, mean07]);
-print(seasonalMeans);
+
+
+Export.image.toDrive({
+  image: mean00,
+  description: 'rainMap00',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean01,
+  description: 'rainMap01',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean02,
+  description: 'rainMap02',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean03,
+  description: 'rainMap03',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean04,
+  description: 'rainMap04',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean05,
+  description: 'rainMap05',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean06,
+  description: 'rainMap06',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean07,
+  description: 'rainMap07',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean08,
+  description: 'rainMap08',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean09,
+  description: 'rainMap09',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean10,
+  description: 'rainMap10',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+//Call in ESA data and clip to Syria
+
+
+
