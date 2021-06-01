@@ -1,0 +1,354 @@
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+//  DROUGHT, MIGRATION, AND CONFLICT PAPER - SYRIA
+//  COLETTE SALEMI
+//  FALL 2019
+/////////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+//  Syria and city data
+//
+//////////////////////////////////////////////////////////////////////////
+
+//Syria boundary polygon
+var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
+//Map.addLayer(Syria, {color: 'FF0000'}, 'Syria');
+
+//World cities
+var citiesWorld = ee.FeatureCollection('users/salem043/worldcities');
+var cities = citiesWorld.filterMetadata('country', 'equals', 'Syria');
+Map.addLayer(cities, {}, "Larger cities in Syria");
+
+//buffer around each city
+var bufferPoly = function(feature) {
+  return feature.buffer(5000);  //!!Change back to 50k after making sure the border identification works 
+};
+
+var buffers = cities.map(bufferPoly);
+
+var buffers2= buffers.clip(Syria);
+print(buffers, "Raw buffer areas");
+
+//Buffers dissolved and made into feature collection
+var buffsGeoDissolve =buffers.geometry().dissolve();
+Map.addLayer(buffsGeoDissolve, {}, 'Dissolve using geometry().dissolve()');
+
+var fc = ee.FeatureCollection([
+  ee.Feature(buffsGeoDissolve)
+]);
+
+var multiGeomExplodeList = fc.toList(fc.size()).map(function(feature) {
+  var geomList = ee.Feature(feature).geometry().geometries();
+  var featureList = geomList.map(function(geom) {
+    return ee.Feature(ee.Geometry(geom));
+  });
+  return featureList;
+})
+.flatten();
+
+var buffDissolveFC = ee.FeatureCollection(multiGeomExplodeList);
+print(buffDissolveFC, "dissolved individual buffers");
+Map.addLayer(buffDissolveFC, {}, "dissolved FC buffers");
+
+//Buffers clipped to Syria extent
+
+//////////////////////////////////////////////////////////////////////////
+//
+//  Population data
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+//Worldpop population data 2000-2010 cropped to Syria
+var Allpop = ee.ImageCollection("WorldPop/GP/100m/pop")
+  .filterDate('2000', '2012')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}) ;
+
+var pop = Allpop.filterMetadata('country', 'equals', 'SYR');
+print("Worldpop data", pop);
+
+var rainfall = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2000', '2012')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation') ;
+print("rainfall", rainfall);
+
+
+var drought10 = rainfall.filterDate('2010-11-01', '2011-03-01')
+//////////////////////////////////////////////////////////////////////////
+//
+//  BUFFER MEAN RAINFALL DURING RAINY SEASONS
+//
+//////////////////////////////////////////////////////////////////////////
+
+//This function converts our image collection into a stack of bands
+function newCollectionToImage(collection){
+var stack = ee.Image(collection.iterate(function(img, prev) {
+return ee.Image(prev).addBands(img);
+}, ee.Image(1)));
+ 
+stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
+return stack;
+}
+
+//Apply the function
+var tch = pop.map(function(img){
+var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
+return img.set("year",y).rename(y);
+});
+
+var tchImg = newCollectionToImage(tch).clip(Syria);
+var pop_Syr=tchImg;
+
+var pop_Syria = 
+pop_Syr.select(['2000', '2001', '2002', '2003', '2004', '2005', '2006',
+'2007', '2008', '2009', '2010', '2011'],
+['pop_00', 'pop_01', 'pop_02', 'pop_03', 'pop_04', 'pop_05', 'pop_06',
+'pop_07', 'pop_08', 'pop_09', 'pop_10', 'pop_11']);
+
+
+//Sum population counts in the pixels to the grid
+var Syr_pop = pop_Syria.reduceRegions(buffers,ee.Reducer.sum());
+
+print("population grids", Syr_pop);
+
+
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+//MEAN RAINFALL PER MONTH WITHIN EACH GRID CELL 
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+function newCollectionToImage(collection){
+var stack = ee.Image(collection.iterate(function(img, prev) {
+return ee.Image(prev).addBands(img);
+}, ee.Image(1)));
+ 
+stack = stack.select(ee.List.sequence(1, stack.bandNames().size().subtract(1)));
+return stack;
+}
+
+var tch = rainfall.map(function(img){
+var y = ee.String(ee.Date(img.get('system:time_start')).get("year"));
+return img.set("year",y).rename(y);
+});
+
+var tchImg = newCollectionToImage(tch).clip(Syria);
+var rainfall_Syria=tchImg;
+
+var rainfall = 
+rainfall_Syria.
+reduceRegions(buffers, ee.Reducer.mean());
+
+print(rainfall);
+
+////
+//combine data
+
+
+
+var toyFilter = ee.Filter.equals({
+  leftField: 'system:index',
+  rightField: 'system:index'
+});
+
+// Define the join.
+var innerJoin = ee.Join.inner();
+
+// Apply the join.
+var popRain = innerJoin.apply(Syr_pop, rainfall,  toyFilter);
+print('Preliminary feature collection', popRain);
+
+
+//Export as shapefile
+Export.table.toDrive({
+  collection: Syr_pop,
+  fileFormat: 'SHP',
+  description: 'SyriaPopRainData',
+  folder: "Climate and conflict in Syria"
+});
+
+
+
+
+///////
+//Get rainfall rasters for drought years
+
+var drought00 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2000-11-01', '2001-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var drought01 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2001-11-01', '2002-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var drought02 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2002-11-01', '2003-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var drought03 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2003-11-01', '2004-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var drought04 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2004-11-01', '2005-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+  
+var drought05 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2005-11-01', '2006-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var drought06 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2006-11-01', '2007-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+print(drought06, "2006-2007 monthly rainfall");
+var drought07 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2007-11-01', '2008-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+var drought08 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2008-11-01', '2009-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+var drought09 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2009-01-01', '2010-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+
+var drought10 = ee.ImageCollection('TRMM/3B43V7')
+  .filterDate('2010-01-01', '2011-03-01')
+  .filterBounds(Syria)
+  .map(function(image){return image.clip(Syria)}).select('precipitation');
+  
+  
+var mean00 = drought00.reduce(ee.Reducer.mean());
+var mean01 = drought01.reduce(ee.Reducer.mean());
+var mean02 = drought02.reduce(ee.Reducer.mean());
+var mean03 = drought03.reduce(ee.Reducer.mean());
+var mean04 = drought04.reduce(ee.Reducer.mean());
+var mean05 = drought05.reduce(ee.Reducer.mean());
+var mean06 = drought06.reduce(ee.Reducer.mean());
+var mean07 = drought07.reduce(ee.Reducer.mean());
+var mean08 = drought08.reduce(ee.Reducer.mean());
+var mean09 = drought09.reduce(ee.Reducer.mean());
+var mean10 = drought10.reduce(ee.Reducer.mean());
+
+
+
+Export.image.toDrive({
+  image: mean00,
+  description: 'rainMap00',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean01,
+  description: 'rainMap01',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean02,
+  description: 'rainMap02',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean03,
+  description: 'rainMap03',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean04,
+  description: 'rainMap04',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean05,
+  description: 'rainMap05',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean06,
+  description: 'rainMap06',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean07,
+  description: 'rainMap07',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean08,
+  description: 'rainMap08',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean09,
+  description: 'rainMap09',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+Export.image.toDrive({
+  image: mean10,
+  description: 'rainMap10',
+  scale: 1000,
+  region: Syria,
+  folder: "Climate and conflict in Syria"
+});
+
+
+//Call in ESA data and clip to Syria
+
+
+
