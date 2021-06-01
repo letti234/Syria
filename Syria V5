@@ -9,7 +9,7 @@
 
 //////////////////////////////////////////////////////////////////////////
 //
-//  DATA IMPORT
+//  Syria and city data
 //
 //////////////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,38 @@ var bufferPoly = function(feature) {
 };
 
 var buffers = cities.map(bufferPoly);
-Map.addLayer(buffers);
+var buffsUnion = buffers.union();
+Map.addLayer(buffsUnion, {}, "Unioned buffers");
+print(buffsUnion, "buffers");
+
+
+//Trim buffers to Syria boundary
+var buffsGeoDissolve =buffers.geometry().dissolve();
+Map.addLayer(buffsGeoDissolve, {}, 'Dissolve using geometry().dissolve()');
+
+var fc = ee.FeatureCollection([
+  ee.Feature(buffsGeoDissolve)
+]);
+
+var multiGeomExplodeList = fc.toList(fc.size()).map(function(feature) {
+  var geomList = ee.Feature(feature).geometry().geometries();
+  var featureList = geomList.map(function(geom) {
+    return ee.Feature(ee.Geometry(geom));
+  });
+  return featureList;
+})
+.flatten();
+
+var buffDissolveFC = ee.FeatureCollection(multiGeomExplodeList);
+print(buffDissolveFC, "dissolved individual buffers")
+Map.addLayer(buffsDissolveFC)
+
+//////////////////////////////////////////////////////////////////////////
+//
+//  Population data
+//
+//////////////////////////////////////////////////////////////////////////
+
 
 //Worldpop population data 2000-2010 cropped to Syria
 var Allpop = ee.ImageCollection("WorldPop/GP/100m/pop")
