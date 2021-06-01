@@ -1,0 +1,33 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #98ff00 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[35.16003513243041, 37.598650836803465],
+          [35.16003513243041, 31.6740457679259],
+          [43.15808200743041, 31.6740457679259],
+          [43.15808200743041, 37.598650836803465]]], null, false);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+//  DROUGHT, MIGRATION, AND CONFLICT PAPER - SYRIA
+//  COLETTE SALEMI
+//  FALL 2019
+/////////////////////////////////////////////////////////////////////////
+
+
+var clim = ee.ImageCollection("IDAHO_EPSCOR/TERRACLIMATE")
+  .filterDate('1999-12-01', '2011-03-01')
+  .filterBounds(geometry)
+  .map(function(image){return image.clip(geometry)}) ;
+
+print(clim);
+
+var batch = require('users/fitoprincipe/geetools:batch');
+
+batch.Download.ImageCollection.toDrive(clim, 'Syria data', 
+                {scale: 4600});
