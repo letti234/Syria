@@ -21,7 +21,7 @@ var geometry =
 
 
 var clim = ee.ImageCollection("IDAHO_EPSCOR/TERRACLIMATE")
-  .filterDate('1999-12-01', '2011-03-01')
+  .filterDate('1999-11-01', '2011-03-01')
   .filterBounds(geometry)
   .map(function(image){return image.clip(geometry)}) ;
 
