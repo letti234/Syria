@@ -7,10 +7,10 @@ var geometry =
       }
     ] */
     ee.Geometry.Polygon(
-        [[[35.16003513243041, 37.598650836803465],
-          [35.16003513243041, 31.6740457679259],
-          [43.15808200743041, 31.6740457679259],
-          [43.15808200743041, 37.598650836803465]]], null, false);
+        [[[33.97351169493041, 37.94601577427014],
+          [33.97351169493041, 31.26174093089693],
+          [44.30066013243041, 31.26174093089693],
+          [44.30066013243041, 37.94601577427014]]], null, false);
 /***** End of imports. If edited, may not auto-convert in the playground. *****/
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
@@ -29,5 +29,5 @@ print(clim);
 
 var batch = require('users/fitoprincipe/geetools:batch');
 
-batch.Download.ImageCollection.toDrive(clim, 'Syria data', 
+batch.Download.ImageCollection.toDrive(clim, 'Syria project', 
                 {scale: 4600});
