@@ -34,5 +34,12 @@ print(grace);
 
 
 //Subtract from GRACE data information on monthly surface water
-//from LEGOS
+//from LEGOS - area and storage variation of large lakes
+
+
+
+//Output is gridcell monthly data on
+//  1. Groundwater storage changes over time
+//  2. Area and storage of large lakes
+//  3. Monthly soil moisture
 
