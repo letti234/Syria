@@ -7,17 +7,32 @@ var geometry =
       }
     ] */
     ee.Geometry.Polygon(
-        [[[34.50993226065053, 37.94753797422953],
-          [34.50993226065053, 31.563423930611695],
-          [43.29899476065053, 31.563423930611695],
-          [43.29899476065053, 37.94753797422953]]], null, false);
+        [[[34.63897031499913, 37.787404009497955],
+          [34.63897031499913, 31.277818310740024],
+          [44.21904843999913, 31.277818310740024],
+          [44.21904843999913, 37.787404009497955]]], null, false);
 /***** End of imports. If edited, may not auto-convert in the playground. *****/
 
+//Producing an estimate of groundwater storage changes -
+//method from Voss et al.
 
+//GRACE data provides us with monthly changes in total water
+//storage - earliest dates are in 2002
 var grace = ee.ImageCollection("NASA/GRACE/MASS_GRIDS/LAND")
-  .filterDate('1999-11-01', '2011-04-01')
+  .filterDate('2002-01-01', '2011-04-01')
   .filterBounds(geometry)
   .map(function(image){return image.clip(geometry)}) ;
 
 print(grace);
-Map.addLayer(grace, {}, "GRACE data");
+
+//Subtract from GRACE data information on monthly snow water
+//equivalent from GLDAS
+
+
+//Subtract from GRACE data information on monthly soil mosture
+//from GLDAS
+
+
+//Subtract from GRACE data information on monthly surface water
+//from LEGOS
+
