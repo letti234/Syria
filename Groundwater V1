@@ -1,1 +1,3 @@
 var grace = ee.ImageCollection("NASA/GRACE/MASS_GRIDS/LAND"); 
+
+var Syria = ee.FeatureCollection('users/salem043/syr_admin0');
