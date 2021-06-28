@@ -18,3 +18,6 @@ var grace = ee.ImageCollection("NASA/GRACE/MASS_GRIDS/LAND")
   .filterDate('1999-11-01', '2011-04-01')
   .filterBounds(geometry)
   .map(function(image){return image.clip(geometry)}) ;
+
+print(grace);
+Map.addLayer(grace, {}, "GRACE data");
